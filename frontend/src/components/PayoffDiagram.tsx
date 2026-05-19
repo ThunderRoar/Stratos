@@ -31,6 +31,8 @@ export function PayoffDiagram({ strategy, spot }: { strategy: Strategy; spot: nu
           <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
           <XAxis
             dataKey="settlement"
+            type="number"
+            domain={['dataMin', 'dataMax']}
             tickFormatter={usd}
             stroke="#71717a"
             fontSize={11}
