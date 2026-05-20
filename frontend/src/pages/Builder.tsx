@@ -9,11 +9,12 @@ import { CostPreview } from '../components/CostPreview'
 import { LegEditor } from '../components/LegEditor'
 import { OracleSelector } from '../components/OracleSelector'
 import { strategyMetrics } from '../lib/payoff'
+import { useLegQuotes } from '../hooks/useLegQuote'
 
 export function Builder() {
   const { data: allOracles } = useOracles()
   const activeOracles = useMemo<Oracle[]>(
-    () => (allOracles ?? []).filter((oracle) => oracle.status === 'active').sort((a, b) => a.expiry - b.expiry),
+    () => (allOracles ?? []).filter((oracle) => oracle.status === 'active').sort((a, b) => b.expiry - a.expiry),
     [allOracles],
   )
 
@@ -28,6 +29,23 @@ export function Builder() {
   const spot = oracleState?.latest_price?.spot ? oracleState.latest_price.spot / 1e9 : null
   const [template, setTemplate] = useState<StrategyTemplate | null>(null)
   const [legs, setLegs] = useState<Leg[]>([])
+  const quotes = useLegQuotes(legs, oracle)
+
+  const quotedLegs = useMemo<Leg[]>(
+    () => legs.map((l, i) => {
+      const q = quotes[i]?.data
+      if (!q) return l
+      // Convert raw DUSDC (6 decimals) back to dollars for calculation
+      return { ...l, cost: Number(q.cost) / 1e6 }
+    }),
+    [legs, quotes],
+  )
+
+  const strategy = useMemo<Strategy | null>(
+    () => (template && quotedLegs.length ? { templateId: template.id, legs: quotedLegs } : null),
+    [template, quotedLegs],
+  )
+
   const seededFor = useRef<string>('')
   useEffect(() => {
     if (!template || spot == null) return
@@ -36,11 +54,6 @@ export function Builder() {
     setLegs(template.buildLegs(spot))
     seededFor.current = key
   }, [template, oracleId, spot])
-  
-  const strategy = useMemo<Strategy | null>(
-    () => (template && legs.length ? { templateId: template.id, legs } : null),
-    [template, legs],
-  )
 
   const metrics = useMemo(
     () => (strategy && spot != null ? strategyMetrics(strategy, spot) : null),
@@ -54,14 +67,14 @@ export function Builder() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Strategy Builder</h1>
-        <OracleSelector oracles={activeOracles} selectedId={oracleId} onSelect={(o) => setOracleId(o.oracle_id)} />
+        <OracleSelector oracles={activeOracles} selectedId={oracleId} onSelect={(oracle) => setOracleId(oracle.oracle_id)} />
       </div>
 
       {spot == null ? (
         <div className="text-xs text-zinc-500">Loading oracle…</div>
       ) : (
         <div className="text-xs text-zinc-500">
-          Spot ${spot.toLocaleString(undefined, { maximumFractionDigits: 0 })} · costs are mock until Step 5
+          Spot ${spot.toLocaleString(undefined, { maximumFractionDigits: 0 })} · live costs from chain
         </div>
       )}
 
@@ -75,14 +88,16 @@ export function Builder() {
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Legs</div>
             <div className="space-y-2">
-              {legs.map((leg, i) => (
+              {quotedLegs.map((leg, i) => (
                 <LegEditor
                   key={i}
                   leg={leg}
                   index={i}
                   minStrike={minStrike}
                   tickSize={tickSize}
-                  onChange={(next) => setLegs((curr) => curr.map((l, idx) => (idx === i ? next : l)))}
+                  quoting={quotes[i]?.isFetching ?? false}
+                  quoteError={quotes[i]?.error?.message ?? null}
+                  onChange={(next) => setLegs((curr) => curr.map((l, idx) => (idx === i ? { ...next, cost: l.cost } : l)))}
                 />
               ))}
             </div>

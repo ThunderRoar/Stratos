@@ -6,9 +6,11 @@ type Props = {
   onChange: (next: Leg) => void
   minStrike?: number
   tickSize?: number
+  quoting?: boolean
+  quoteError?: string | null
 }
 
-export function LegEditor({ leg, onChange, minStrike = 1, tickSize = 1 }: Props) {
+export function LegEditor({ leg, onChange, minStrike = 1, tickSize = 1, quoting, quoteError }: Props) {
   const sideColor = leg.side === 'buy' ? 'text-green-400' : 'text-red-400'
 
   return (
@@ -51,8 +53,17 @@ export function LegEditor({ leg, onChange, minStrike = 1, tickSize = 1 }: Props)
         />
       </label>
 
-      <span className="ml-auto text-xs text-zinc-500 font-mono">
-        cost ${leg.cost.toFixed(0)}
+      <span
+        className={`ml-auto text-xs font-mono ${quoteError ? 'cursor-help' : ''}`}
+        title={quoteError ?? undefined}
+      >
+        {quoting ? (
+          <span className="text-zinc-500">quoting…</span>
+        ) : quoteError ? (
+          <span className="text-red-400 underline decoration-dotted decoration-red-400/50 underline-offset-4">unavailable</span>
+        ) : (
+          <span className="text-zinc-500">cost ${leg.cost.toFixed(2)}</span>
+        )}
       </span>
     </div>
   )

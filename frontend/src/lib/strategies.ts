@@ -1,3 +1,7 @@
+// TODO: strikes are time-of-expiry naive (use sqrt(daysToExpiry) scaling)
+// currently tuned for weeks-out oracles; very short expiries can hit
+// EFairPriceAlreadySettled in pricing_config.
+
 import type { Leg, StrategyTemplate } from './strategy-types'
 
 const roundStrike = (x: number) => Math.round(x / 1000) * 1000
