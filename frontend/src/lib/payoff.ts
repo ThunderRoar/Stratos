@@ -12,9 +12,7 @@ function legInTheMoney(leg: Leg, settlement: number): boolean {
 // Single leg PnL
 export function legPayoff(leg: Leg, settlement: number): number {
   const grossPayoff = legInTheMoney(leg, settlement) ? leg.qty : 0
-  return leg.side === 'buy'
-    ? grossPayoff - leg.cost
-    : leg.cost - grossPayoff
+  return grossPayoff - leg.cost
 }
 
 // Strategy PnL = sum of leg P&Ls.
@@ -50,9 +48,6 @@ export function strategyMetrics(strategy: Strategy, spot: number) {
     if (p.payoff > maxProfit) maxProfit = p.payoff
     if (p.payoff < maxLoss) maxLoss = p.payoff
   }
-  const netCost = strategy.legs.reduce(
-    (sum, l) => sum + (l.side === 'buy' ? l.cost : -l.cost),
-    0,
-  )
+  const netCost = strategy.legs.reduce((sum, l) => sum + l.cost, 0)
   return { maxProfit, maxLoss, netCost }
 }

@@ -11,15 +11,14 @@ type Props = {
 }
 
 export function LegEditor({ leg, onChange, minStrike = 1, tickSize = 1, quoting, quoteError }: Props) {
-  const sideColor = leg.side === 'buy' ? 'text-green-400' : 'text-red-400'
+  const directionColor =
+    leg.kind === 'binary'
+      ? leg.direction === 'up' ? 'text-green-400' : 'text-red-400'
+      : 'text-zinc-300'
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm">
-      <span className={`font-mono uppercase font-semibold ${sideColor}`}>
-        {leg.side}
-      </span>
-
-      <span className="font-mono uppercase text-zinc-300">
+      <span className={`font-mono uppercase font-semibold ${directionColor}`}>
         {leg.kind === 'binary' ? leg.direction : 'range'}
       </span>
 

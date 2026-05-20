@@ -29,7 +29,7 @@ export function useLegQuotes(legs: Leg[], oracle: Oracle | null) {
 
 function legSignature(leg: Leg): string {
   if (leg.kind === 'binary') {
-    return `b|${leg.side}|${leg.direction}|${leg.strike}|${leg.qty}`
+    return `b|${leg.direction}|${leg.strike}|${leg.qty}`
   }
-  return `r|${leg.side}|${leg.lower}|${leg.higher}|${leg.qty}`
+  return `r|${leg.lower}|${leg.higher}|${leg.qty}`
 }
