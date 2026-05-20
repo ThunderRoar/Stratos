@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import type { Leg, Strategy, StrategyTemplate } from '../lib/strategy-types'
 import type { Oracle } from '../lib/predict-types'
 import { useOracles } from '../hooks/useOracles'
@@ -28,10 +28,15 @@ export function Builder() {
   const spot = oracleState?.latest_price?.spot ? oracleState.latest_price.spot / 1e9 : null
   const [template, setTemplate] = useState<StrategyTemplate | null>(null)
   const [legs, setLegs] = useState<Leg[]>([])
+  const seededFor = useRef<string>('')
   useEffect(() => {
-    if (template && spot != null) setLegs(template.buildLegs(spot))
-  }, [template, spot])
-
+    if (!template || spot == null) return
+    const key = `${template.id}::${oracleId ?? ''}`
+    if (seededFor.current === key) return
+    setLegs(template.buildLegs(spot))
+    seededFor.current = key
+  }, [template, oracleId, spot])
+  
   const strategy = useMemo<Strategy | null>(
     () => (template && legs.length ? { templateId: template.id, legs } : null),
     [template, legs],
