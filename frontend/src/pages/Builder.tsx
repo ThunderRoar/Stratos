@@ -10,6 +10,7 @@ import { LegEditor } from '../components/LegEditor'
 import { OracleSelector } from '../components/OracleSelector'
 import { strategyMetrics } from '../lib/payoff'
 import { useLegQuotes } from '../hooks/useLegQuote'
+import { ExecuteFlow } from '../components/ExecuteFlow'
 
 export function Builder() {
   const { data: allOracles } = useOracles()
@@ -104,6 +105,11 @@ export function Builder() {
           </div>
         </>
       )}
+      <ExecuteFlow
+        strategy={strategy}
+        oracleId={oracleId}
+        expiry={oracle?.expiry ?? null}
+      />
     </div>
   )
 }

@@ -16,3 +16,14 @@ export function getOracles(predictId: string = PREDICT_OBJECT_ID) {
 export function getOracleState(oracleId: string) {
   return get<OracleState>(`/oracles/${oracleId}/state`)
 }
+
+export type ManagerSummary = {
+  manager_id: string
+  owner: string
+  checkpoint_timestamp_ms: number
+}
+
+export async function getManagersByOwner(owner: string): Promise<ManagerSummary[]> {
+  const all = await get<ManagerSummary[]>('/managers')
+  return all.filter((m) => m.owner.toLowerCase() === owner.toLowerCase())
+}
