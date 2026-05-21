@@ -59,3 +59,30 @@ export function buildMintStrategyTx(args: MintStrategyArgs): Transaction {
 
   return tx
 }
+
+export type DepositArgs = {
+  managerId: string
+  amountRaw: bigint // raw 6 decimal DUSDC
+  sourceCoinId: string // a wallet coin with balance >= amountRaw
+}
+
+export function buildDepositTx(args: DepositArgs): Transaction {
+  const tx = new Transaction()
+
+  const [splitCoin] = tx.splitCoins(
+    tx.object(args.sourceCoinId),
+    [tx.pure.u64(args.amountRaw)],
+  )
+
+  tx.moveCall({
+    target: `${PREDICT_PACKAGE_ID}::predict_manager::deposit`,
+    typeArguments: [QUOTE_ASSET_TYPE],
+    arguments: [
+      tx.object(args.managerId),
+      splitCoin,
+    ],
+  })
+
+  return tx
+}
+

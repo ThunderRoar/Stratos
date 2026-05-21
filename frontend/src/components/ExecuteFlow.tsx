@@ -1,8 +1,14 @@
 import type { Strategy } from '../lib/strategy-types'
 import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { usePredictManager } from '../hooks/usePredictManager'
+import { useManagerBalance } from '../hooks/useManagerBalance'
+import { useWalletDusdcCoins } from '../hooks/useWalletDusdcCoins'
 import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
-import { buildCreateManagerTx, buildMintStrategyTx } from '../lib/predict-actions'
+import {
+  buildCreateManagerTx,
+  buildMintStrategyTx,
+  buildDepositTx,
+} from '../lib/predict-actions'
 
 type Props = {
   strategy: Strategy | null
@@ -10,9 +16,18 @@ type Props = {
   expiry: number | null
 }
 
+const fmtUsd = (raw: bigint) =>
+  (Number(raw) / 1e6).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  })
+
 export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
   const account = useCurrentAccount()
   const { managerId, isLoading: mgrLoading, refetch: refetchManager } = usePredictManager()
+  const { balance: mgrBalance, refetch: refetchManagerBalance } = useManagerBalance(managerId)
+  const { data: wallet, refetch: refetchWallet } = useWalletDusdcCoins()
   const execute = useExecuteStrategy()
 
   if (!account) {
@@ -21,7 +36,6 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
   if (mgrLoading) {
     return <Hint>Checking for your manager…</Hint>
   }
-
   if (!managerId) {
     return (
       <Action
@@ -36,6 +50,46 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
     )
   }
 
+  // Total cost of the strategy = sum of leg costs in raw DUSDC. Quoted legs carry cost in dollars via Builder's /1e6 conversion, multiply back to raw for the manager balance check.
+  const strategyCostRaw =
+    strategy?.legs.reduce((sum, l) => sum + BigInt(Math.round(l.cost * 1e6)), 0n) ?? 0n
+
+  const shortfallRaw = strategyCostRaw - mgrBalance
+  const needsDeposit = strategy != null && shortfallRaw > 0n
+
+  if (needsDeposit) {
+    const canCover = (wallet.coins[0]?.balance ?? 0n) >= shortfallRaw
+    if (!canCover) {
+      return (
+        <Hint>
+          Need {fmtUsd(shortfallRaw)} more in manager. Your largest wallet coin is{' '}
+          {fmtUsd(wallet.coins[0]?.balance ?? 0n)} — request more DUSDC from the faucet.
+        </Hint>
+      )
+    }
+
+    return (
+      <div className="space-y-2">
+        <div className="text-xs text-zinc-500">
+          Manager balance: {fmtUsd(mgrBalance)} · Strategy cost: {fmtUsd(strategyCostRaw)}
+        </div>
+        <Action
+          label={`Deposit ${fmtUsd(shortfallRaw)}`}
+          onClick={async () => {
+            await execute.mutateAsync(buildDepositTx({
+              managerId,
+              amountRaw: shortfallRaw,
+              sourceCoinId: wallet.coins[0].id,
+            }))
+            await Promise.all([refetchManagerBalance(), refetchWallet()])
+          }}
+          pending={execute.isPending}
+          error={execute.error?.message ?? null}
+        />
+      </div>
+    )
+  }
+
   if (!strategy || !oracleId || expiry == null) {
     return <Hint>Pick a template to enable execution.</Hint>
   }
@@ -46,12 +100,16 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
   return (
     <Action
       label="Execute Strategy"
-      onClick={() => execute.mutateAsync(buildMintStrategyTx({
-        managerId,
-        oracleId,
-        expiry,
-        legs: strategy.legs,
-      }))}
+      onClick={async () => {
+        await execute.mutateAsync(buildMintStrategyTx({
+          managerId,
+          oracleId,
+          expiry,
+          legs: strategy.legs,
+        }))
+        // Manager balance drops after mint so refetch so the UI is current.
+        await refetchManagerBalance()
+      }}
       pending={execute.isPending}
       error={execute.error?.message ?? null}
       success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
