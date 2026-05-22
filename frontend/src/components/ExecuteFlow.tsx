@@ -5,11 +5,8 @@ import { usePredictManager } from '../hooks/usePredictManager'
 import { useManagerBalance } from '../hooks/useManagerBalance'
 import { useWalletDusdcCoins } from '../hooks/useWalletDusdcCoins'
 import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
-import {
-  buildCreateManagerTx,
-  buildMintStrategyTx,
-  buildDepositTx,
-} from '../lib/predict-actions'
+import { buildCreateManagerTx, buildDepositTx } from '../lib/predict-actions'
+import { buildExecuteStrategyTx } from '../lib/stratos-actions'
 
 type Props = {
   strategy: Strategy | null
@@ -124,7 +121,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
     return <Hint>Pick a template to enable execution.</Hint>
   }
 
-  // Pull the digest from either kind — dapp-kit's local effects parser can mislabel a
+  // Pull the digest from either kind - dapp kit's local effects parser can mislabel a
   // chain-successful tx as FailedTransaction when its BCS types lag the network, but the
   // digest itself is always valid and clickable on Suiscan
   const txResult =
@@ -142,12 +139,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
         label="Execute Strategy"
         pendingLabel="Executing on chain…"
         onClick={async () => {
-          await execute.mutateAsync(buildMintStrategyTx({
-            managerId,
-            oracleId,
-            expiry,
-            legs: strategy.legs,
-          }))
+          await execute.mutateAsync(buildExecuteStrategyTx(strategy, managerId, oracleId, expiry))
           // Manager balance drops after mint so refetch so the UI is current
           await refetchManagerBalance()
         }}
