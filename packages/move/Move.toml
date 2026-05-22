@@ -1,0 +1,10 @@
+[package]
+name = "Stratos"
+edition = "2024.beta"
+
+[dependencies]
+deepbook_predict = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/predict", rev = "predict-testnet-4-16" }
+
+[addresses]
+deepbook_predict = "0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138"
+stratos = "0x0"
