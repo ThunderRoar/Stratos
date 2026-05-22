@@ -3,6 +3,7 @@ import { ConnectButton } from '@mysten/dapp-kit-react/ui'
 import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { Markets } from './pages/Markets'
 import { Builder } from './pages/Builder'
+import { Surface } from './pages/Surface'
 
 export default function App() {
   const account = useCurrentAccount()
@@ -15,6 +16,7 @@ export default function App() {
           <nav className="flex gap-4 text-sm text-zinc-400">
             <Link to="/markets" className="hover:text-zinc-100">Markets</Link>
             <Link to="/builder" className="hover:text-zinc-100">Builder</Link>
+            <Link to="/surface" className="hover:text-zinc-100">Surface</Link>
           </nav>
         </div>
         <ConnectButton />
@@ -24,6 +26,7 @@ export default function App() {
         <Route path="/" element={<Markets />} />
         <Route path="/markets" element={<Markets />} />
         <Route path="/builder" element={<Builder />} />
+        <Route path="/surface" element={<Surface />} />
       </Routes>
 
       {!account && (
