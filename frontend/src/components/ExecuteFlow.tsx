@@ -7,6 +7,7 @@ import { useWalletDusdcCoins } from '../hooks/useWalletDusdcCoins'
 import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
 import { buildCreateManagerTx, buildDepositTx } from '../lib/predict-actions'
 import { buildExecuteStrategyTx } from '../lib/stratos-actions'
+import { translateError } from '../lib/error-translate'
 
 type Props = {
   strategy: Strategy | null
@@ -56,7 +57,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
           }
         }}
         pending={execute.isPending || syncing}
-        error={execute.error?.message ?? null}
+        error={translateError(execute.error?.message)}
       />
     )
   }
@@ -111,7 +112,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
             }
           }}
           pending={execute.isPending || syncing}
-          error={execute.error?.message ?? null}
+          error={translateError(execute.error?.message)}
         />
       </div>
     )
@@ -144,7 +145,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
           await refetchManagerBalance()
         }}
         pending={execute.isPending}
-        error={execute.error?.message ?? null}
+        error={translateError(execute.error?.message)}
         success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
         successHref={txDigest ? `https://suiscan.xyz/testnet/tx/${txDigest}` : null}
       />

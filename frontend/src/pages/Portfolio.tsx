@@ -6,6 +6,7 @@ import { usePositions } from '../hooks/usePositions'
 import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
 import { PositionTable } from '../components/PositionTable'
 import { buildRedeemPositionTx } from '../lib/predict-actions'
+import { translateError } from '../lib/error-translate'
 import type { Position } from '../lib/predict-types'
 
 const fmtDusdc = (raw6: number) =>
@@ -80,7 +81,7 @@ export function Portfolio() {
 
       <PositionTable positions={open} onRedeem={onRedeem} redeemingKey={redeemingKey} />
       {redeem.error && (
-        <div className="text-xs text-red-400">Redeem failed: {redeem.error.message}</div>
+        <div className="text-xs text-red-400">Redeem failed: {translateError(redeem.error.message)}</div>
       )}
     </div>
   )
