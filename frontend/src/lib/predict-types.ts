@@ -42,3 +42,20 @@ export type OracleState = {
   latest_svi: OracleSVI | null
   ask_bounds: unknown | null
 }
+
+export type Position = {
+  oracle_id: string
+  underlying_asset: string
+  expiry: number
+  strike: number
+  is_up: boolean
+  open_quantity: number
+  open_cost_basis: number
+  mark_value: number
+  unrealized_pnl: number
+  realized_pnl: number
+  status: 'active' | 'settled' | 'pending_settlement'
+  first_minted_at: number
+  last_activity_at: number
+}
+

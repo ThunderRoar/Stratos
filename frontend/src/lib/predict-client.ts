@@ -1,5 +1,5 @@
 import { PREDICT_SERVER_URL, PREDICT_OBJECT_ID } from '../config/constants'
-import type { Oracle, OracleState } from './predict-types'
+import type { Oracle, OracleState, Position } from './predict-types'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${PREDICT_SERVER_URL}${path}`)
@@ -27,3 +27,8 @@ export async function getManagersByOwner(owner: string): Promise<ManagerSummary[
   const all = await get<ManagerSummary[]>('/managers')
   return all.filter((m) => m.owner.toLowerCase() === owner.toLowerCase())
 }
+
+export function getPositions(managerId: string) {
+  return get<Position[]>(`/managers/${managerId}/positions/summary`)
+}
+

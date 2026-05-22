@@ -6,6 +6,7 @@ export function useOracleState(oracleId: string | undefined) {
     queryKey: ['oracle-state', oracleId],
     queryFn: () => getOracleState(oracleId!),
     enabled: !!oracleId,
-    refetchInterval: 10_000,
+    staleTime: 6_000,
+    refetchInterval: 6_000,
   })
 }
