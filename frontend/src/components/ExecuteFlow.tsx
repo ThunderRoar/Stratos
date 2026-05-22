@@ -134,24 +134,29 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
   const txDigest = txResult?.digest ?? null
 
   return (
-    <Action
-      label="Execute Strategy"
-      pendingLabel="Executing on chain…"
-      onClick={async () => {
-        await execute.mutateAsync(buildMintStrategyTx({
-          managerId,
-          oracleId,
-          expiry,
-          legs: strategy.legs,
-        }))
-        // Manager balance drops after mint so refetch so the UI is current
-        await refetchManagerBalance()
-      }}
-      pending={execute.isPending}
-      error={execute.error?.message ?? null}
-      success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
-      successHref={txDigest ? `https://suiscan.xyz/testnet/tx/${txDigest}` : null}
-    />
+    <div className="space-y-2">
+      <div className="text-xs text-zinc-500">
+        Manager balance: {fmtUsd(mgrBalance)} · Strategy cost: {fmtUsd(strategyCostRaw)} (covered)
+      </div>
+      <Action
+        label="Execute Strategy"
+        pendingLabel="Executing on chain…"
+        onClick={async () => {
+          await execute.mutateAsync(buildMintStrategyTx({
+            managerId,
+            oracleId,
+            expiry,
+            legs: strategy.legs,
+          }))
+          // Manager balance drops after mint so refetch so the UI is current
+          await refetchManagerBalance()
+        }}
+        pending={execute.isPending}
+        error={execute.error?.message ?? null}
+        success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
+        successHref={txDigest ? `https://suiscan.xyz/testnet/tx/${txDigest}` : null}
+      />
+    </div>
   )
 }
 
