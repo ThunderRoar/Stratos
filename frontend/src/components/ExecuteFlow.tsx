@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Strategy } from '../lib/strategy-types'
 import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { usePredictManager } from '../hooks/usePredictManager'
@@ -29,6 +30,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
   const { balance: mgrBalance, refetch: refetchManagerBalance } = useManagerBalance(managerId)
   const { data: wallet, refetch: refetchWallet } = useWalletDusdcCoins()
   const execute = useExecuteStrategy()
+  const [syncing, setSyncing] = useState(false)
 
   if (!account) {
     return <Hint>Connect a wallet to execute.</Hint>
@@ -40,21 +42,37 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
     return (
       <Action
         label="Create Manager"
+        pendingLabel={syncing ? 'Waiting for indexer…' : undefined}
         onClick={async () => {
           await execute.mutateAsync(buildCreateManagerTx())
-          await refetchManager()
+          setSyncing(true)
+          try {
+            // Predict server indexer lags the chain by 10-30s so poll until our manager shows up
+            const deadline = Date.now() + 45_000
+            while (Date.now() < deadline) {
+              const { data } = await refetchManager()
+              if (data) break
+              await new Promise((r) => setTimeout(r, 1500))
+            }
+          } finally {
+            setSyncing(false)
+          }
         }}
-        pending={execute.isPending}
+        pending={execute.isPending || syncing}
         error={execute.error?.message ?? null}
       />
     )
   }
 
-  // Total cost of the strategy = sum of leg costs in raw DUSDC. Quoted legs carry cost in dollars via Builder's /1e6 conversion, multiply back to raw for the manager balance check.
+  // Total cost of the strategy = sum of leg costs in raw DUSDC. Quoted legs carry cost in dollars via Builder's /1e6 conversion, multiply back to raw for the manager balance check
   const strategyCostRaw =
     strategy?.legs.reduce((sum, l) => sum + BigInt(Math.round(l.cost * 1e6)), 0n) ?? 0n
 
-  const shortfallRaw = strategyCostRaw - mgrBalance
+  // Predict re-prices each leg at mint time, so the quoted cost is only a snapshot. Without a
+  // buffer, even 1 unit of theta drift between deposit and execute aborts mint with code 3 in
+  // balance_manager::withdraw_with_proof. 2% absorbs typical drift over a signing window
+  const depositTargetRaw = strategyCostRaw + strategyCostRaw / 50n
+  const shortfallRaw = depositTargetRaw - mgrBalance
   const needsDeposit = strategy != null && shortfallRaw > 0n
 
   if (needsDeposit) {
@@ -71,19 +89,31 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
     return (
       <div className="space-y-2">
         <div className="text-xs text-zinc-500">
-          Manager balance: {fmtUsd(mgrBalance)} · Strategy cost: {fmtUsd(strategyCostRaw)}
+          Manager balance: {fmtUsd(mgrBalance)} · Strategy cost: {fmtUsd(strategyCostRaw)} (depositing 2% buffer)
         </div>
         <Action
           label={`Deposit ${fmtUsd(shortfallRaw)}`}
+          pendingLabel={syncing ? 'Confirming on chain…' : undefined}
           onClick={async () => {
             await execute.mutateAsync(buildDepositTx({
               managerId,
               amountRaw: shortfallRaw,
               sourceCoinId: wallet.coins[0].id,
             }))
-            await Promise.all([refetchManagerBalance(), refetchWallet()])
+            setSyncing(true)
+            try {
+              // RPC node may not have ingested the deposit checkpoint yet so poll until it has
+              const deadline = Date.now() + 20_000
+              while (Date.now() < deadline) {
+                const [{ data: bal }] = await Promise.all([refetchManagerBalance(), refetchWallet()])
+                if (bal != null && bal >= depositTargetRaw) break
+                await new Promise((r) => setTimeout(r, 1000))
+              }
+            } finally {
+              setSyncing(false)
+            }
           }}
-          pending={execute.isPending}
+          pending={execute.isPending || syncing}
           error={execute.error?.message ?? null}
         />
       </div>
@@ -94,12 +124,19 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
     return <Hint>Pick a template to enable execution.</Hint>
   }
 
-  const txDigest =
-    execute.data?.$kind === 'Transaction' ? execute.data.Transaction.digest : null
+  // Pull the digest from either kind — dapp-kit's local effects parser can mislabel a
+  // chain-successful tx as FailedTransaction when its BCS types lag the network, but the
+  // digest itself is always valid and clickable on Suiscan
+  const txResult =
+    execute.data?.$kind === 'Transaction'
+      ? execute.data.Transaction
+      : execute.data?.FailedTransaction
+  const txDigest = txResult?.digest ?? null
 
   return (
     <Action
       label="Execute Strategy"
+      pendingLabel="Executing on chain…"
       onClick={async () => {
         await execute.mutateAsync(buildMintStrategyTx({
           managerId,
@@ -107,12 +144,13 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
           expiry,
           legs: strategy.legs,
         }))
-        // Manager balance drops after mint so refetch so the UI is current.
+        // Manager balance drops after mint so refetch so the UI is current
         await refetchManagerBalance()
       }}
       pending={execute.isPending}
       error={execute.error?.message ?? null}
       success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
+      successHref={txDigest ? `https://suiscan.xyz/testnet/tx/${txDigest}` : null}
     />
   )
 }
@@ -122,8 +160,8 @@ function Hint({ children }: { children: React.ReactNode }) {
 }
 
 function Action({
-  label, onClick, pending, error, success,
-}: { label: string; onClick: () => void; pending: boolean; error: string | null; success?: string | null }) {
+  label, onClick, pending, pendingLabel, error, success, successHref,
+}: { label: string; onClick: () => void; pending: boolean; pendingLabel?: string; error: string | null; success?: string | null; successHref?: string | null }) {
   return (
     <div className="space-y-2">
       <button
@@ -131,10 +169,23 @@ function Action({
         disabled={pending}
         className="rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 px-4 py-2 text-sm font-semibold"
       >
-        {pending ? 'Signing…' : label}
+        {pending ? (pendingLabel ?? 'Signing…') : label}
       </button>
       {error && <div className="text-xs text-red-400">{error}</div>}
-      {success && <div className="text-xs text-green-400">{success}</div>}
+      {success && (
+        successHref ? (
+          <a
+            href={successHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-xs text-green-400 hover:text-green-300 underline underline-offset-2"
+          >
+            {success} ↗
+          </a>
+        ) : (
+          <div className="text-xs text-green-400">{success}</div>
+        )
+      )}
     </div>
   )
 }
