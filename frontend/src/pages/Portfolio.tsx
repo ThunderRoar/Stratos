@@ -1,7 +1,12 @@
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { usePredictManager } from '../hooks/usePredictManager'
 import { usePositions } from '../hooks/usePositions'
+import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
 import { PositionTable } from '../components/PositionTable'
+import { buildRedeemPositionTx } from '../lib/predict-actions'
+import type { Position } from '../lib/predict-types'
 
 const fmtDusdc = (raw6: number) =>
   (raw6 / 1e6).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
@@ -10,6 +15,30 @@ export function Portfolio() {
   const account = useCurrentAccount()
   const { managerId, isLoading: mgrLoading } = usePredictManager()
   const { data: positions, isLoading, error } = usePositions(managerId)
+  const queryClient = useQueryClient()
+  const redeem = useExecuteStrategy()
+  const [redeemingKey, setRedeemingKey] = useState<string | null>(null)
+
+  const onRedeem = async (p: Position) => {
+    if (!managerId) return
+    const key = `${p.oracle_id}-${p.strike}-${p.is_up}`
+    setRedeemingKey(key)
+    try {
+      await redeem.mutateAsync(buildRedeemPositionTx({
+        managerId,
+        oracleId: p.oracle_id,
+        expiry: p.expiry,
+        strike: p.strike,
+        isUp: p.is_up,
+        qtyRaw: p.open_quantity,
+      }))
+      // Indexer lags the chain so force invalidate so the next poll picks up the new state
+      await queryClient.invalidateQueries({ queryKey: ['positions', managerId] })
+      await queryClient.invalidateQueries({ queryKey: ['manager-balance', managerId] })
+    } finally {
+      setRedeemingKey(null)
+    }
+  }
 
   if (!account) {
     return <div className="p-6 text-zinc-500">Connect a wallet to view your portfolio.</div>
@@ -49,7 +78,10 @@ export function Portfolio() {
         <Stat label="Unrealized P&L" value={`${pnlSign}${fmtDusdc(totalPnl)}`} valueClass={pnlColor} />
       </div>
 
-      <PositionTable positions={open} />
+      <PositionTable positions={open} onRedeem={onRedeem} redeemingKey={redeemingKey} />
+      {redeem.error && (
+        <div className="text-xs text-red-400">Redeem failed: {redeem.error.message}</div>
+      )}
     </div>
   )
 }

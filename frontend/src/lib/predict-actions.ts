@@ -25,7 +25,7 @@ export type MintStrategyArgs = {
   legs: Leg[]
 }
 
-// Adds N x mint() calls into a single PTB and assumes the manager has sufficient DUSDC already deposited.
+// Adds N x mint() calls into a single PTB and assumes the manager has sufficient DUSDC already deposited
 export function buildMintStrategyTx(args: MintStrategyArgs): Transaction {
   const tx = new Transaction()
 
@@ -56,6 +56,44 @@ export function buildMintStrategyTx(args: MintStrategyArgs): Transaction {
       ],
     })
   }
+
+  return tx
+}
+
+export type RedeemPositionArgs = {
+  managerId: string
+  oracleId: string
+  expiry: number // raw ms timestamp
+  strike: number // raw 9 decimal
+  isUp: boolean
+  qtyRaw: number
+}
+
+// Closes a single binary position
+export function buildRedeemPositionTx(args: RedeemPositionArgs): Transaction {
+  const tx = new Transaction()
+
+  const key = tx.moveCall({
+    target: `${PREDICT_PACKAGE_ID}::market_key::${args.isUp ? 'up' : 'down'}`,
+    arguments: [
+      tx.pure.id(args.oracleId),
+      tx.pure.u64(args.expiry),
+      tx.pure.u64(args.strike),
+    ],
+  })
+
+  tx.moveCall({
+    target: `${PREDICT_PACKAGE_ID}::predict::redeem`,
+    typeArguments: [QUOTE_ASSET_TYPE],
+    arguments: [
+      tx.object(PREDICT_OBJECT_ID),
+      tx.object(args.managerId),
+      tx.object(args.oracleId),
+      key,
+      tx.pure.u64(args.qtyRaw),
+      tx.object(CLOCK_OBJECT_ID),
+    ],
+  })
 
   return tx
 }

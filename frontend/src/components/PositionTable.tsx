@@ -3,7 +3,10 @@ import { formatExpiry } from '../lib/format'
 
 type Props = {
   positions: Position[]
+  onRedeem?: (p: Position) => void
+  redeemingKey?: string | null // `${oracle}-${strike}-${isUp}` for the row in flight
 }
+
 
 const fmtStrike = (raw9: number) => (raw9 / 1e9).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 const fmtDusdc = (raw6: number) => (raw6 / 1e6).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
@@ -15,10 +18,11 @@ const STATUS_COLOR: Record<Position['status'], string> = {
   settled: 'bg-zinc-500/15 text-zinc-300',
 }
 
-export function PositionTable({ positions }: Props) {
+export function PositionTable({ positions, onRedeem, redeemingKey }: Props) {
   if (positions.length === 0) {
     return <div className="text-xs text-zinc-500">No positions yet — execute a strategy to see it here.</div>
   }
+  const rowKey = (p: Position) => `${p.oracle_id}-${p.strike}-${p.is_up}`
 
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800">
@@ -34,6 +38,7 @@ export function PositionTable({ positions }: Props) {
             <Th>Unrealized P&L</Th>
             <Th>Expires</Th>
             <Th>Status</Th>
+            <Th></Th>
           </tr>
         </thead>
         <tbody>
@@ -59,6 +64,17 @@ export function PositionTable({ positions }: Props) {
                   <span className={`rounded px-2 py-0.5 text-xs ${STATUS_COLOR[p.status]}`}>
                     {p.status.replace('_', ' ')}
                   </span>
+                </Td>
+                <Td>
+                  {onRedeem && p.open_quantity > 0 && p.status !== 'pending_settlement' && (
+                    <button
+                      onClick={() => onRedeem(p)}
+                      disabled={redeemingKey != null}
+                      className="rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 px-2 py-1 text-xs"
+                    >
+                      {redeemingKey === rowKey(p) ? 'Redeeming…' : 'Redeem'}
+                    </button>
+                  )}
                 </Td>
               </tr>
             )
