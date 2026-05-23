@@ -5,12 +5,14 @@ import { useOracles } from '../hooks/useOracles'
 import { useOracleState } from '../hooks/useOracleState'
 import { StrategyTemplates } from '../components/StrategyTemplates'
 import { PayoffDiagram } from '../components/PayoffDiagram'
-import { CostPreview } from '../components/CostPreview'
 import { LegEditor } from '../components/LegEditor'
 import { OracleSelector } from '../components/OracleSelector'
 import { strategyMetrics } from '../lib/payoff'
 import { useLegQuotes } from '../hooks/useLegQuote'
 import { ExecuteFlow } from '../components/ExecuteFlow'
+import { RiskPanel } from '../components/RiskPanel'
+import { parseRawSvi, impliedVol } from '../lib/svi'
+import { yearsToExpiryFromMs, yearsFromDays } from '../lib/options-math'
 
 export function Builder() {
   const { data: allOracles } = useOracles()
@@ -64,6 +66,15 @@ export function Builder() {
   const minStrike = oracle ? oracle.min_strike / 1e9 : undefined
   const tickSize = oracle ? oracle.tick_size / 1e9 : undefined
 
+  const atmIv = useMemo(() => {
+    if (!oracleState?.latest_svi || !oracleState.latest_price?.forward) return null
+    const p = parseRawSvi(oracleState.latest_svi)
+    const fwd = oracleState.latest_price.forward / 1e9
+    return impliedVol(p, fwd, fwd, yearsFromDays(1))
+  }, [oracleState])
+  
+  const yearsToExpiry = useMemo(() => oracle ? yearsToExpiryFromMs(oracle.expiry) : null, [oracle])
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -84,7 +95,9 @@ export function Builder() {
       {strategy && metrics && spot != null && (
         <>
           <PayoffDiagram strategy={strategy} spot={spot} />
-          <CostPreview maxProfit={metrics.maxProfit} maxLoss={metrics.maxLoss} netCost={metrics.netCost} />
+          {strategy && spot != null && atmIv != null && yearsToExpiry != null && (
+            <RiskPanel strategy={strategy} spot={spot} atmIv={atmIv} years={yearsToExpiry} />
+          )}
 
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Legs</div>
