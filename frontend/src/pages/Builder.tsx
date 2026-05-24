@@ -28,6 +28,7 @@ export function Builder() {
 
   const oracle = activeOracles.find((oracle) => oracle.oracle_id === oracleId) ?? null
   const { data: oracleState } = useOracleState(oracleId ?? undefined)
+  const yearsToExpiry = useMemo(() => oracle ? yearsToExpiryFromMs(oracle.expiry) : 0, [oracle])
   
   const spot = oracleState?.latest_price?.spot ? oracleState.latest_price.spot / 1e9 : null
   const [template, setTemplate] = useState<StrategyTemplate | null>(null)
@@ -54,9 +55,9 @@ export function Builder() {
     if (!template || spot == null) return
     const key = `${template.id}::${oracleId ?? ''}`
     if (seededFor.current === key) return
-    setLegs(template.buildLegs(spot))
+    setLegs(template.buildLegs(spot, yearsToExpiry))
     seededFor.current = key
-  }, [template, oracleId, spot])
+  }, [template, oracleId, spot, yearsToExpiry])
 
   const metrics = useMemo(
     () => (strategy && spot != null ? strategyMetrics(strategy, spot) : null),
@@ -72,8 +73,6 @@ export function Builder() {
     const fwd = oracleState.latest_price.forward / 1e9
     return impliedVol(p, fwd, fwd, yearsFromDays(1))
   }, [oracleState])
-  
-  const yearsToExpiry = useMemo(() => oracle ? yearsToExpiryFromMs(oracle.expiry) : null, [oracle])
 
   return (
     <div className="p-6 space-y-6">

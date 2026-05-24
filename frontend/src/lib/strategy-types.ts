@@ -31,5 +31,5 @@ export type StrategyTemplate = {
   id: string
   name: string
   description: string  // one-line market view
-  buildLegs: (spot: number) => Leg[]
+  buildLegs: (spot: number, yearsToExpiry: number) => Leg[]
 }
