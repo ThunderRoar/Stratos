@@ -59,3 +59,11 @@ export type Position = {
   last_activity_at: number
 }
 
+// For backtesting where each row has SVI and price at a given timestamp
+export type OracleSnapshot = {
+  timestampMs: number
+  spot: number
+  forward: number
+  svi: OracleSVI
+}
+
