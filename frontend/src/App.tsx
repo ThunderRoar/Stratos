@@ -5,6 +5,7 @@ import { Markets } from './pages/Markets'
 import { Builder } from './pages/Builder'
 import { Surface } from './pages/Surface'
 import { Portfolio } from './pages/Portfolio'
+import { Activity } from './pages/Activity'
 
 export default function App() {
   const account = useCurrentAccount()
@@ -19,6 +20,7 @@ export default function App() {
             <Link to="/builder" className="hover:text-zinc-100">Builder</Link>
             <Link to="/portfolio" className="hover:text-zinc-100">Portfolio</Link>
             <Link to="/surface" className="hover:text-zinc-100">Surface</Link>
+            <Link to="/activity" className="hover:text-zinc-100">Activity</Link>
           </nav>
         </div>
         <ConnectButton />
@@ -30,6 +32,7 @@ export default function App() {
         <Route path="/builder" element={<Builder />} />
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/surface" element={<Surface />} />
+        <Route path="/activity" element={<Activity />} />
       </Routes>
 
       {!account && (
