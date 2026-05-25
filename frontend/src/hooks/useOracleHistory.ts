@@ -4,7 +4,7 @@ import { joinPricesAndSvi } from '../lib/oracle-history'
 import type { OracleSnapshot } from '../lib/predict-types'
 
 // Fetches the most recent N price + SVI events and merges them into snapshots
-export function useOracleHistory(oracleId: string | null, limit = 1000) {
+export function useOracleHistory(oracleId: string | null, limit = 10_000) {
   return useQuery({
     queryKey: ['oracle-history', oracleId, limit],
     queryFn: async (): Promise<OracleSnapshot[]> => {

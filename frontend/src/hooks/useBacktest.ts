@@ -8,23 +8,21 @@ export function useBacktest(
   oracleId: string | null,
   strategy: Strategy | null,
   oracleExpiryMs: number | null,
-  windowDays: number,
+  windowMs: number
 ): {
   data: EquityPoint[]
   isLoading: boolean
   error: Error | null
 } {
-  const { data: history, isLoading, error } = useOracleHistory(oracleId)
+  const { data: history, isLoading, error } = useOracleHistory(oracleId, 10_000)
 
   const data = useMemo(() => {
     if (!history || !strategy || oracleExpiryMs == null) return []
-    // Window the snapshots to the chosen lookback period.
-    const fromMs = Date.now() - windowDays * 86_400_000
+    const fromMs = Date.now() - windowMs
     const windowed = withinWindow(history, fromMs)
-    // Downsample to keep the chart fast — ~150 points is plenty for a smooth curve.
     const sampled = downsample(windowed, 150)
     return backtestStrategy(strategy, sampled, oracleExpiryMs)
-  }, [history, strategy, oracleExpiryMs, windowDays])
+  }, [history, strategy, oracleExpiryMs, windowMs])
 
   return { data, isLoading, error: (error as Error | null) ?? null }
 }

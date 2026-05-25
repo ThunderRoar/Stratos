@@ -13,6 +13,7 @@ import { ExecuteFlow } from '../components/ExecuteFlow'
 import { RiskPanel } from '../components/RiskPanel'
 import { parseRawSvi, impliedVol } from '../lib/svi'
 import { yearsToExpiryFromMs, yearsFromDays } from '../lib/options-math'
+import { BacktestPanel } from '../components/BacktestPanel'
 
 export function Builder() {
   const { data: allOracles } = useOracles()
@@ -96,6 +97,9 @@ export function Builder() {
           <PayoffDiagram strategy={strategy} spot={spot} />
           {strategy && spot != null && atmIv != null && yearsToExpiry != null && (
             <RiskPanel strategy={strategy} spot={spot} atmIv={atmIv} years={yearsToExpiry} />
+          )}
+          {strategy && oracleId && oracle?.expiry && (
+            <BacktestPanel strategy={strategy} oracleId={oracleId} oracleExpiryMs={oracle?.expiry} />
           )}
 
           <div>
