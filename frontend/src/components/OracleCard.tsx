@@ -18,7 +18,7 @@ const HORIZONS = [
   { label: '30d', years: yearsFromDays(30) },
 ]
 
-const fmtMoveUsd = (n: number) => '±' + n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+const fmtMoveUsd = (n: number) => '\u00B1' + n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) // \u00B1 is plus minus unicode
 
 export function OracleCard({ oracle }: { oracle: Oracle }) {
   const { data: state } = useOracleState(oracle.oracle_id)
@@ -42,27 +42,27 @@ export function OracleCard({ oracle }: { oracle: Oracle }) {
   })()
 
   return (
-    <div className="group rounded-lg border border-line/60 bg-surface p-4 transition hover:border-accent/30">
+    <div className="group rounded-2xl border border-line/60 bg-surface p-6 transition hover:border-accent/30 hover:bg-surface-elev/60">
       <div className="flex items-center justify-between">
         <span className="text-base font-semibold text-fg-2">{oracle.underlying_asset}</span>
         <StatusLabel variant={STATUS_VARIANT[oracle.status] ?? 'neutral'}>
           {oracle.status.replace('_', ' ')}
         </StatusLabel>
       </div>
-      <div className="mt-3 text-3xl font-mono font-semibold text-fg">
+      <div className="mt-4 text-4xl font-semibold tracking-tight text-fg">
         {spot ? formatUsd(spot) : '—'}
       </div>
-      <div className="mt-1 text-xs text-fg-3">
+      <div className="mt-2 text-sm text-fg-3">
         expires in {formatExpiry(oracle.expiry)}
       </div>
       {expectedMoves && (
-        <div className="mt-3 pt-3 border-t border-line/60">
-          <div className="text-[10px] uppercase tracking-wider text-fg-3 mb-1.5">Expected move</div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        <div className="mt-5 pt-4 border-t border-line/60">
+          <div className="text-[11px] uppercase tracking-wider text-fg-3 mb-2">Expected move</div>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
             {expectedMoves.map((m) => (
-              <div key={m.label} className="flex items-baseline gap-1.5">
-                <span className="font-mono text-fg">{fmtMoveUsd(m.move)}</span>
-                <span className="text-[10px] text-fg-3">{m.label}</span>
+              <div key={m.label} className="flex flex-col">
+                <span className="text-fg font-medium">{fmtMoveUsd(m.move)}</span>
+                <span className="text-[11px] text-fg-3">{m.label}</span>
               </div>
             ))}
           </div>
