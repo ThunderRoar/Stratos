@@ -10,3 +10,5 @@ export const DUSDC_CURRENCY_ID = '0xf3000dff421833d4bb8ed58fac146d691a3aaba2785a
 export const PLP_COIN_TYPE = '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138::plp::PLP'
 export const DUSDC_DECIMALS = 6
 export const STRATOS_PACKAGE_ID = '0x1353e53419f8c227df2e85817cf8bfbdb08c290d01f5dbdfe44058fb19dcbcfa'
+
+export const EXPLORER_BASE = `https://suiscan.xyz/${NETWORK}`

@@ -1,5 +1,6 @@
 import type { StrategyActivityRow } from '../hooks/useStrategyActivity'
 import { StatusLabel } from './StatusLabel'
+import { explorerObjectUrl, explorerAccountUrl, explorerTxUrl } from '../lib/explorer'
 
 type Variant = 'up' | 'down' | 'analytical' | 'pending' | 'neutral'
 
@@ -54,25 +55,36 @@ export function ActivityTable({ rows }: { rows: StrategyActivityRow[] }) {
                 </StatusLabel>
               </td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/object/${r.oracle}`} target="_blank" rel="noopener noreferrer" className="hover:text-fg">
+                <ExplorerLink href={explorerObjectUrl(r.oracle)} className="hover:text-fg">
                   {truncate(r.oracle)}
-                </a>
+                </ExplorerLink>
               </td>
               <td className="px-3 py-2 text-right font-mono">{r.legCount}</td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/account/${r.sender}`} target="_blank" rel="noopener noreferrer" className="hover:text-fg">
+                <ExplorerLink href={explorerAccountUrl(r.sender)} className="hover:text-fg">
                   {truncate(r.sender)}
-                </a>
+                </ExplorerLink>
               </td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/tx/${r.txDigest}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent/80 underline underline-offset-2">
+                <ExplorerLink href={explorerTxUrl(r.txDigest)} className="text-accent hover:text-accent/80 underline underline-offset-2">
                   {truncate(r.txDigest)} ↗
-                </a>
+                </ExplorerLink>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  )
+}
+
+// If URL validation failed (returned null), render as plain text instead of a broken link.
+// Safer than rendering a bad href — and the truncated id is still readable for debugging.
+function ExplorerLink({ href, className, children }: { href: string | null; className?: string; children: React.ReactNode }) {
+  if (!href) return <span className={className}>{children}</span>
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      {children}
+    </a>
   )
 }

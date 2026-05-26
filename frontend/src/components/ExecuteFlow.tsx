@@ -8,6 +8,7 @@ import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
 import { buildCreateManagerTx, buildDepositTx } from '../lib/predict-actions'
 import { buildExecuteStrategyTx } from '../lib/stratos-actions'
 import { translateError } from '../lib/error-translate'
+import { explorerTxUrl } from '../lib/explorer'
 
 type Props = {
   strategy: Strategy | null
@@ -147,7 +148,7 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
         pending={execute.isPending}
         error={translateError(execute.error?.message)}
         success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
-        successHref={txDigest ? `https://suiscan.xyz/testnet/tx/${txDigest}` : null}
+        successHref={txDigest ? explorerTxUrl(txDigest) : null}
       />
     </div>
   )
