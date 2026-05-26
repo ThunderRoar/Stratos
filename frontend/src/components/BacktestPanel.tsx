@@ -42,21 +42,21 @@ export function BacktestPanel({ strategy, oracleId, oracleExpiryMs }: Props) {
   const currentValue = last?.value ?? 0
   const pnl = last?.pnl ?? 0
   const pnlPct = last?.pnlPct ?? 0
-  const pnlColor = pnl > 0 ? 'text-green-400' : pnl < 0 ? 'text-red-400' : 'text-zinc-300'
+  const pnlColor = pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-fg'
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-line/60 bg-surface p-4 space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="text-xs uppercase tracking-wider text-zinc-500">Backtest</div>
-        <div className="flex gap-1 text-xs">
+        <div className="text-[11px] uppercase tracking-wider text-fg-3 font-semibold">Backtest</div>
+        <div className="flex gap-1 text-xs bg-bg/60 rounded-full p-0.5">
           {WINDOWS.map((w) => (
             <button
               key={w.label}
               onClick={() => setWindowMs(w.ms)}
-              className={`rounded px-2 py-1 font-mono ${
+              className={`rounded-full px-2.5 py-1 font-mono transition ${
                 windowMs === w.ms
-                  ? 'bg-zinc-700 text-zinc-100'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                  ? 'bg-surface-elev text-fg'
+                  : 'text-fg-2 hover:text-fg'
               }`}
             >
               {w.label}
@@ -73,21 +73,21 @@ export function BacktestPanel({ strategy, oracleId, oracleExpiryMs }: Props) {
       </div>
 
       {isLoading ? (
-        <div className="h-64 flex items-center justify-center text-xs text-zinc-500 rounded-lg border border-zinc-800 bg-zinc-950">
+        <div className="h-64 flex items-center justify-center text-xs text-fg-3 rounded-lg border border-line bg-bg">
           Loading historical data…
         </div>
       ) : (
         <BacktestChart data={data} />
       )}
 
-      <div className="text-xs text-zinc-600">
+      <div className="text-xs text-fg-3/70">
         Hypothetical: if this strategy had been minted {fmtWindow(windowMs)} ago at the prevailing fair price, the line shows how its mark value would have evolved since.
       </div>
     </div>
   )
 }
 
-function Stat({label, value, hint, valueClass = 'text-zinc-100'}: {
+function Stat({ label, value, hint, valueClass = 'text-fg' }: {
   label: string
   value: string
   hint?: string
@@ -95,9 +95,9 @@ function Stat({label, value, hint, valueClass = 'text-zinc-100'}: {
 }) {
   return (
     <div>
-      <div className="text-xs text-zinc-500">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
       <div className={`mt-1 text-base font-mono ${valueClass}`}>{value}</div>
-      {hint && <div className="text-[10px] text-zinc-600">{hint}</div>}
+      {hint && <div className="text-[10px] text-fg-3/70 mt-0.5">{hint}</div>}
     </div>
   )
 }

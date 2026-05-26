@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/*
+  Direction C — Premium dark.
+  Sui-leaning navy page bg with NEAR-BLACK cards layered on top. Cards read as
+  "elevated above" the page. Bloomberg-density content (mono numbers, tighter
+  pills) with Robinhood-warmth headlines and a friendlier hover language.
+*/
+@theme {
+  /* Page chrome — Sui-leaning navy */
+  --color-bg: #0B1220;
+
+  /* Cards / panels are DARKER than the page — premium "floating" feel */
+  --color-surface: #0A0E18;
+  --color-surface-elev: #11172A;
+  --color-line: #1A2032;
+
+  /* Text — high contrast */
+  --color-fg: #FFFFFF;
+  --color-fg-2: #B8C2D9;
+  --color-fg-3: #6B7894;
+
+  /* Semantic — softer saturation than Direction A */
+  --color-accent: #4DA2FF;     /* Sui blue */
+  --color-profit: #20C997;     /* warmer teal-green */
+  --color-loss: #FF6B6B;       /* softer red */
+  --color-warn: #FFC107;
+  --color-analytical: #9D6FFF;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+}
+
+/* Tabular nums everywhere — sans values stay aligned with mono values. */
+.font-mono,
+code, kbd, pre, samp {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+body {
+  background: #0B1220;
+  color: #FFFFFF;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}

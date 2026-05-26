@@ -1,4 +1,5 @@
 import type { Leg } from '../lib/strategy-types'
+import { StatusLabel } from './StatusLabel'
 
 type Props = {
   leg: Leg
@@ -11,16 +12,15 @@ type Props = {
 }
 
 export function LegEditor({ leg, onChange, minStrike = 1, tickSize = 1, quoting, quoteError }: Props) {
-  const directionColor =
+  const variant =
     leg.kind === 'binary'
-      ? leg.direction === 'up' ? 'text-green-400' : 'text-red-400'
-      : 'text-zinc-300'
+      ? leg.direction === 'up' ? 'up' : 'down'
+      : 'analytical'
+  const label = leg.kind === 'binary' ? leg.direction.toUpperCase() : 'RANGE'
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm">
-      <span className={`font-mono uppercase font-semibold ${directionColor}`}>
-        {leg.kind === 'binary' ? leg.direction : 'range'}
-      </span>
+      <StatusLabel variant={variant}>{label}</StatusLabel>
 
       {leg.kind === 'binary' ? (
         <label className="flex items-center gap-2">

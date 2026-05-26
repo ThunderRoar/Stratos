@@ -1,11 +1,12 @@
 import { useStrategyActivity } from '../hooks/useStrategyActivity'
 import { ActivityTable } from '../components/ActivityTable'
+import { PageHeader } from '../components/PageHeader'
 
 export function Activity() {
   const { data: rows, isLoading, error } = useStrategyActivity()
 
-  if (isLoading) return <div className="p-6 text-zinc-500">Loading activity…</div>
-  if (error) return <div className="p-6 text-red-400">Failed to load: {error.message}</div>
+  if (isLoading) return <div className="p-6 text-fg-3">Loading activity…</div>
+  if (error) return <div className="p-6 text-loss">Failed to load: {error.message}</div>
 
   const list = rows ?? []
   const byType = list.reduce<Record<string, number>>((acc, r) => {
@@ -14,13 +15,11 @@ export function Activity() {
   }, {})
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Strategy Activity</h1>
-        <p className="text-xs text-zinc-500 mt-1">
-          Live feed of every <code className="text-zinc-300">StrategyExecuted</code> event emitted by our Move contract on Sui testnet · refreshing every 5s
-        </p>
-      </div>
+    <div className="p-6 space-y-8">
+      <PageHeader
+        title="Strategy Activity"
+        subtitle="Live feed of every StrategyExecuted event from our Move contract · refreshing every 5s"
+      />
 
       {list.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
@@ -39,9 +38,9 @@ export function Activity() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className="mt-1 text-lg font-mono text-zinc-100">{value}</div>
+    <div className="rounded-lg border border-line/60 bg-surface p-4">
+      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+      <div className="mt-1.5 text-xl font-mono text-fg">{value}</div>
     </div>
   )
 }

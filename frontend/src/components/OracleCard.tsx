@@ -3,6 +3,14 @@ import { useOracleState } from '../hooks/useOracleState'
 import { formatUsd, formatExpiry } from '../lib/format'
 import { parseRawSvi, impliedVol } from '../lib/svi'
 import { expectedMoveDollars, yearsFromDays } from '../lib/options-math'
+import { StatusLabel } from './StatusLabel'
+
+const STATUS_VARIANT = {
+  active: 'active',
+  pending_settlement: 'pending',
+  settled: 'settled',
+  inactive: 'neutral',
+} as const
 
 const HORIZONS = [
   { label: '1d', years: yearsFromDays(1) },
@@ -34,27 +42,30 @@ export function OracleCard({ oracle }: { oracle: Oracle }) {
   })()
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-lg font-semibold">{oracle.underlying_asset}</span>
-        <span className="text-xs uppercase tracking-wider text-zinc-500">{oracle.status}</span>
+    <div className="group rounded-lg border border-line/60 bg-surface p-4 transition hover:border-accent/30">
+      <div className="flex items-center justify-between">
+        <span className="text-base font-semibold text-fg-2">{oracle.underlying_asset}</span>
+        <StatusLabel variant={STATUS_VARIANT[oracle.status] ?? 'neutral'}>
+          {oracle.status.replace('_', ' ')}
+        </StatusLabel>
       </div>
-      <div className="mt-2 text-3xl font-mono">
+      <div className="mt-3 text-3xl font-mono font-semibold text-fg">
         {spot ? formatUsd(spot) : '—'}
       </div>
-      <div className="mt-2 text-xs text-zinc-500">
+      <div className="mt-1 text-xs text-fg-3">
         expires in {formatExpiry(oracle.expiry)}
       </div>
       {expectedMoves && (
-        <div className="mt-3 text-xs text-zinc-400">
-          Expected move:{' '}
-          {expectedMoves.map((m, i) => (
-            <span key={m.label}>
-              {i > 0 && ' · '}
-              <span className="font-mono text-zinc-200">{fmtMoveUsd(m.move)}</span>
-              <span className="text-zinc-500"> ({m.label})</span>
-            </span>
-          ))}
+        <div className="mt-3 pt-3 border-t border-line/60">
+          <div className="text-[10px] uppercase tracking-wider text-fg-3 mb-1.5">Expected move</div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {expectedMoves.map((m) => (
+              <div key={m.label} className="flex items-baseline gap-1.5">
+                <span className="font-mono text-fg">{fmtMoveUsd(m.move)}</span>
+                <span className="text-[10px] text-fg-3">{m.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

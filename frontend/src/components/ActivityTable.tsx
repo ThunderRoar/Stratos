@@ -1,10 +1,13 @@
 import type { StrategyActivityRow } from '../hooks/useStrategyActivity'
+import { StatusLabel } from './StatusLabel'
 
-const STRATEGY_COLOR: Record<string, string> = {
-  bull_ladder: 'bg-green-500/15 text-green-300',
-  bear_ladder: 'bg-red-500/15 text-red-300',
-  strangle: 'bg-purple-500/15 text-purple-300',
-  range_bet: 'bg-amber-500/15 text-amber-300',
+type Variant = 'up' | 'down' | 'analytical' | 'pending' | 'neutral'
+
+const STRATEGY_VARIANT: Record<string, Variant> = {
+  bull_ladder: 'up',
+  bear_ladder: 'down',
+  strangle: 'analytical',
+  range_bet: 'pending',
 }
 
 const STRATEGY_LABEL: Record<string, string> = {
@@ -26,12 +29,12 @@ const fmtTime = (ms: number) => {
 
 export function ActivityTable({ rows }: { rows: StrategyActivityRow[] }) {
   if (rows.length === 0) {
-    return <div className="text-xs text-zinc-500">No strategies executed yet — be the first.</div>
+    return <div className="text-xs text-fg-3">No strategies executed yet — be the first.</div>
   }
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-line/60 bg-surface">
       <table className="w-full text-sm">
-        <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-500">
+        <thead className="bg-bg/40 text-[10px] uppercase tracking-wider text-fg-3">
           <tr>
             <th className="px-3 py-2 text-left font-medium">Time</th>
             <th className="px-3 py-2 text-left font-medium">Strategy</th>
@@ -43,26 +46,26 @@ export function ActivityTable({ rows }: { rows: StrategyActivityRow[] }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.txDigest} className="border-t border-zinc-800 hover:bg-zinc-900/50">
-              <td className="px-3 py-2 text-zinc-400">{fmtTime(r.timestampMs)}</td>
+            <tr key={r.txDigest} className="border-t border-line hover:bg-surface-elev/50">
+              <td className="px-3 py-2 text-fg-2">{fmtTime(r.timestampMs)}</td>
               <td className="px-3 py-2">
-                <span className={`rounded px-2 py-0.5 text-xs ${STRATEGY_COLOR[r.strategyType] ?? 'bg-zinc-500/15 text-zinc-300'}`}>
+                <StatusLabel variant={STRATEGY_VARIANT[r.strategyType] ?? 'neutral'}>
                   {STRATEGY_LABEL[r.strategyType] ?? r.strategyType}
-                </span>
+                </StatusLabel>
               </td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/object/${r.oracle}`} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-100">
+                <a href={`https://suiscan.xyz/testnet/object/${r.oracle}`} target="_blank" rel="noopener noreferrer" className="hover:text-fg">
                   {truncate(r.oracle)}
                 </a>
               </td>
               <td className="px-3 py-2 text-right font-mono">{r.legCount}</td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/account/${r.sender}`} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-100">
+                <a href={`https://suiscan.xyz/testnet/account/${r.sender}`} target="_blank" rel="noopener noreferrer" className="hover:text-fg">
                   {truncate(r.sender)}
                 </a>
               </td>
               <td className="px-3 py-2 font-mono text-xs">
-                <a href={`https://suiscan.xyz/testnet/tx/${r.txDigest}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                <a href={`https://suiscan.xyz/testnet/tx/${r.txDigest}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent/80 underline underline-offset-2">
                   {truncate(r.txDigest)} ↗
                 </a>
               </td>

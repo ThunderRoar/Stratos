@@ -11,16 +11,16 @@ export default function App() {
   const account = useCurrentAccount()
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <div className="min-h-screen bg-bg text-fg">
+      <header className="border-b border-line/60 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-8">
           <Link to="/" className="text-xl font-semibold tracking-tight">Stratos</Link>
-          <nav className="flex gap-4 text-sm text-zinc-400">
-            <Link to="/markets" className="hover:text-zinc-100">Markets</Link>
-            <Link to="/builder" className="hover:text-zinc-100">Builder</Link>
-            <Link to="/portfolio" className="hover:text-zinc-100">Portfolio</Link>
-            <Link to="/surface" className="hover:text-zinc-100">Surface</Link>
-            <Link to="/activity" className="hover:text-zinc-100">Activity</Link>
+          <nav className="flex gap-1 text-sm text-fg-2">
+            <Link to="/markets" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Markets</Link>
+            <Link to="/builder" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Builder</Link>
+            <Link to="/portfolio" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Portfolio</Link>
+            <Link to="/surface" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Surface</Link>
+            <Link to="/activity" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Activity</Link>
           </nav>
         </div>
         <ConnectButton />
@@ -36,7 +36,7 @@ export default function App() {
       </Routes>
 
       {!account && (
-        <div className="px-6 pb-6 text-xs text-zinc-500">
+        <div className="px-6 pb-6 text-sm text-fg-3">
           Connect a wallet to trade.
         </div>
       )}

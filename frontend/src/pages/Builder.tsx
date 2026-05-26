@@ -14,6 +14,9 @@ import { RiskPanel } from '../components/RiskPanel'
 import { parseRawSvi, impliedVol } from '../lib/svi'
 import { yearsToExpiryFromMs, yearsFromDays } from '../lib/options-math'
 import { BacktestPanel } from '../components/BacktestPanel'
+import { PageHeader } from '../components/PageHeader'
+import { ContextBar } from '../components/ContextBar'
+import { formatExpiry } from '../lib/format'
 
 export function Builder() {
   const { data: allOracles } = useOracles()
@@ -76,18 +79,30 @@ export function Builder() {
   }, [oracleState])
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Strategy Builder</h1>
-        <OracleSelector oracles={activeOracles} selectedId={oracleId} onSelect={(oracle) => setOracleId(oracle.oracle_id)} />
-      </div>
+    <div className="p-6 space-y-8">
+      <PageHeader
+        title="Strategy Builder"
+        subtitle="Compose multi-leg strategies and execute atomically via our Move executor"
+        right={
+          <OracleSelector
+            oracles={activeOracles}
+            selectedId={oracleId}
+            onSelect={(o) => setOracleId(o.oracle_id)}
+          />
+        }
+      />
 
-      {spot == null ? (
-        <div className="text-xs text-zinc-500">Loading oracle…</div>
+      {oracle && spot != null ? (
+        <ContextBar
+          cells={[
+            { label: 'Underlying', value: oracle.underlying_asset },
+            { label: 'Spot', value: `$${spot.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+            { label: 'Expires', value: formatExpiry(oracle.expiry) },
+            ...(atmIv != null ? [{ label: 'ATM IV', value: `${(atmIv * 100).toFixed(1)}%` }] : []),
+          ]}
+        />
       ) : (
-        <div className="text-xs text-zinc-500">
-          Spot ${spot.toLocaleString(undefined, { maximumFractionDigits: 0 })} · live costs from chain
-        </div>
+        <div className="text-xs text-fg-3">Loading oracle…</div>
       )}
 
       <StrategyTemplates selectedId={template?.id ?? null} onSelect={setTemplate} />
@@ -103,7 +118,7 @@ export function Builder() {
           )}
 
           <div>
-            <div className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Legs</div>
+            <div className="text-xs uppercase tracking-wider text-fg-3 mb-2">Legs</div>
             <div className="space-y-2">
               {quotedLegs.map((leg, i) => (
                 <LegEditor

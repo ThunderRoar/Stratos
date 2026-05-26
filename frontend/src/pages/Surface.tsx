@@ -6,6 +6,7 @@ import { OracleSelector } from '../components/OracleSelector'
 import { SurfaceChart } from '../components/SurfaceChart'
 import { parseRawSvi, smileCurve, impliedVol } from '../lib/svi'
 import { formatExpiry } from '../lib/format'
+import { PageHeader } from '../components/PageHeader'
 
 export function Surface() {
   const { data: allOracles } = useOracles()
@@ -49,19 +50,21 @@ export function Surface() {
   }, [sviRaw, forward, yearsToExpiry])
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Volatility Surface</h1>
-          <p className="text-xs text-zinc-500 mt-1">
-            Implied vol smile derived live from the oracle's SVI parameters.
-          </p>
-        </div>
-        <OracleSelector oracles={activeOracles} selectedId={oracleId} onSelect={(o) => setOracleId(o.oracle_id)} />
-      </div>
+    <div className="p-6 space-y-8">
+      <PageHeader
+        title="Volatility Surface"
+        subtitle="Implied vol smile derived live from the oracle's SVI parameters"
+        right={
+          <OracleSelector
+            oracles={activeOracles}
+            selectedId={oracleId}
+            onSelect={(o) => setOracleId(o.oracle_id)}
+          />
+        }
+      />
 
       {!oracle || !spot || !sviRaw ? (
-        <div className="text-xs text-zinc-500">Loading oracle state…</div>
+        <div className="text-xs text-fg-3">Loading oracle state…</div>
       ) : (
         <>
           <Stats
@@ -106,9 +109,9 @@ function Stats({
 
 function Stat({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className={`mt-1 text-lg ${mono ? 'font-mono' : ''} text-zinc-100`}>{value}</div>
+    <div className="rounded-lg border border-line/60 bg-surface p-4">
+      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+      <div className={`mt-1 text-base ${mono ? 'font-mono' : 'font-mono'} text-fg`}>{value}</div>
     </div>
   )
 }
