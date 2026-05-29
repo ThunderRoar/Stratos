@@ -78,8 +78,6 @@ export function ActivityTable({ rows }: { rows: StrategyActivityRow[] }) {
   )
 }
 
-// If URL validation failed (returned null), render as plain text instead of a broken link.
-// Safer than rendering a bad href — and the truncated id is still readable for debugging.
 function ExplorerLink({ href, className, children }: { href: string | null; className?: string; children: React.ReactNode }) {
   if (!href) return <span className={className}>{children}</span>
   return (

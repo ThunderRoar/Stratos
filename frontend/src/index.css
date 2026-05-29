@@ -1,38 +1,22 @@
 @import "tailwindcss";
 
-/*
-  Direction C — Premium dark.
-  Sui-leaning navy page bg with NEAR-BLACK cards layered on top. Cards read as
-  "elevated above" the page. Bloomberg-density content (mono numbers, tighter
-  pills) with Robinhood-warmth headlines and a friendlier hover language.
-*/
 @theme {
-  /* Page chrome — Sui-leaning navy */
   --color-bg: #0B1220;
-
-  /* Cards / panels are DARKER than the page — premium "floating" feel */
   --color-surface: #0A0E18;
   --color-surface-elev: #11172A;
   --color-line: #1A2032;
-
-  /* Text — high contrast */
   --color-fg: #FFFFFF;
   --color-fg-2: #B8C2D9;
   --color-fg-3: #6B7894;
-
-  /* Semantic — softer saturation than Direction A */
-  --color-accent: #4DA2FF;     /* Sui blue */
-  --color-profit: #20C997;     /* warmer teal-green */
-  --color-loss: #FF6B6B;       /* softer red */
+  --color-accent: #4DA2FF;
+  --color-profit: #20C997;
+  --color-loss: #FF6B6B;
   --color-warn: #FFC107;
   --color-analytical: #9D6FFF;
-
-  /* Typography */
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 }
 
-/* Tabular nums everywhere — sans values stay aligned with mono values. */
 .font-mono,
 code, kbd, pre, samp {
   font-feature-settings: "tnum";
@@ -44,4 +28,60 @@ body {
   color: #FFFFFF;
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
+}
+
+.bg-dotted-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1.5px, transparent 0);
+  background-size: 28px 28px;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0, black 120px, black calc(100% - 120px), transparent 100%),
+    linear-gradient(to right, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, black 120px, black calc(100% - 120px), transparent 100%),
+    linear-gradient(to right, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
+  mask-composite: intersect;
+}
+
+@keyframes tidal-drift {
+  0%, 100% { transform: translate(-50%, 0) scale(1); }
+  50%      { transform: translate(-50%, -60px) scale(1.18); }
+}
+
+.tidal-aurora {
+  animation: tidal-drift 8s ease-in-out infinite;
+}
+
+@keyframes hero-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(80px, -50px) scale(1.15); }
+  66%      { transform: translate(-50px, 30px) scale(0.95); }
+}
+
+@keyframes hero-drift-2 {
+  0%, 100% { transform: translate(160px, -40px) scale(1); }
+  33%      { transform: translate(220px, -90px) scale(1.2); }
+  66%      { transform: translate(120px, -10px) scale(0.92); }
+}
+
+@keyframes hero-drift-3 {
+  0%, 100% { transform: translate(-180px, 60px) scale(1); }
+  33%      { transform: translate(-220px, 30px) scale(1.15); }
+  66%      { transform: translate(-140px, 90px) scale(0.9); }
+}
+
+.hero-blob-1,
+.hero-blob-2,
+.hero-blob-3 {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.hero-blob-1 { animation: hero-drift-1 9s ease-in-out infinite; }
+.hero-blob-2 { animation: hero-drift-2 12s ease-in-out infinite; }
+.hero-blob-3 { animation: hero-drift-3 11s ease-in-out infinite; }
+
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
