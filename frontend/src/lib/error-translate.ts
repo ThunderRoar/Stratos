@@ -35,7 +35,10 @@ const RULES: Rule[] = [
     match: (r) => /user (rejected|denied|cancelled)/i.test(r) || r.includes('Rejected from user'),
     message: 'Transaction cancelled.',
   },
-
+  {
+    match: (r) => /closed the wallet window|popup (closed|was closed)|window (was )?closed/i.test(r),
+    message: 'Wallet window closed before confirmation could be read. The transaction may have succeeded — check your balance or the explorer.',
+  },
   // Gas, Sui balance too low for the tx, or no SUI coins at all
   {
     match: (r) => /insufficient (gas|sui)/i.test(r) || r.includes('no valid gas coins'),

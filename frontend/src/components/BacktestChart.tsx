@@ -32,7 +32,6 @@ export function BacktestChart({ data }: Props) {
     )
   }
 
-  // Determine y-axis domain symmetrically around 0 so the breakeven line is visually centered.
   const maxAbs = Math.max(...data.map((d) => Math.abs(d.pnl)))
   const yDomain: [number, number] = [-maxAbs * 1.1, maxAbs * 1.1]
 

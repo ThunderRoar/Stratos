@@ -7,6 +7,7 @@ import { Builder } from './pages/Builder'
 import { Surface } from './pages/Surface'
 import { Portfolio } from './pages/Portfolio'
 import { Activity } from './pages/Activity'
+import { Earn } from './pages/Earn'
 
 export default function App() {
   const account = useCurrentAccount()
@@ -25,6 +26,7 @@ export default function App() {
               <Link to="/markets" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Markets</Link>
               <Link to="/builder" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Builder</Link>
               <Link to="/portfolio" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Portfolio</Link>
+              <Link to="/earn" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Earn</Link>
               <Link to="/surface" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Surface</Link>
               <Link to="/activity" className="rounded-full px-3 py-1.5 hover:bg-surface hover:text-fg transition">Activity</Link>
             </nav>
@@ -38,6 +40,7 @@ export default function App() {
         <Route path="/markets" element={<Markets />} />
         <Route path="/builder" element={<Builder />} />
         <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/earn" element={<Earn />} />
         <Route path="/surface" element={<Surface />} />
         <Route path="/activity" element={<Activity />} />
       </Routes>

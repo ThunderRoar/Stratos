@@ -67,3 +67,36 @@ export type OracleSnapshot = {
   svi: OracleSVI
 }
 
+// Snapshot of Predict's liquidity vault
+// utilization and max_payout_utilization are fractions in [0, 1]
+export type VaultSummary = {
+  predict_id: string
+  quote_assets: string[]
+  vault_balance: number // total DUSDC sitting in the pool
+  vault_value: number // vault_balance + mark to market on open exposure
+  total_mtm: number // current MTM of open positions vault is short
+  total_max_payout: number // worst-case payout if every position settles ITM
+  available_liquidity: number // DUSDC the vault could pay out right now
+  available_withdrawal: number  // DUSDC LPs are allowed to withdraw right now
+  plp_total_supply: number // total PLP shares outstanding
+  plp_share_price: number // DUSDC per share (NAV)
+  utilization: number // fraction of vault tied up in open exposure
+  max_payout_utilization: number // fraction tied up under worst-case settlement
+  net_deposits: number // total_supplied - total_withdrawn
+  total_supplied: number  // lifetime DUSDC deposited
+  total_withdrawn: number // lifetime DUSDC withdrawn
+}
+
+// One sample of vault NAV over time
+export type VaultPerformancePoint = {
+  timestamp_ms: number
+  share_price: number
+  vault_value: number
+  total_shares: number
+}
+
+export type VaultPerformance = {
+  predict_id: string
+  range: string
+  points: VaultPerformancePoint[]
+}

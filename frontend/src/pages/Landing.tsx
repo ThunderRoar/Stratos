@@ -1,6 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConnectButton } from '@mysten/dapp-kit-react/ui'
+import {
+  Layers,
+  Shield,
+  History,
+  Activity,
+  Radio,
+  Boxes,
+  PiggyBank,
+  Package,
+  FileCode2,
+  FunctionSquare,
+  Zap,
+  Globe,
+  ListChecks,
+  type LucideIcon,
+} from 'lucide-react'
 import { STRATOS_PACKAGE_ID } from '../config/constants'
 import { explorerObjectUrl } from '../lib/explorer'
 import { useOracles } from '../hooks/useOracles'
@@ -57,7 +73,7 @@ export function Landing() {
           <LiveStrip btcSpot={btcSpot} strategyCount={strategyCount} />
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
-              to="/builder"
+              to="/markets"
               className="rounded-full bg-accent hover:bg-accent/90 px-6 py-3 text-sm font-semibold text-bg transition shadow-lg shadow-accent/20"
             >
               Try Demo →
@@ -96,33 +112,53 @@ export function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Feature
               accent="bg-accent"
+              iconColor="text-accent"
+              icon={Layers}
               title="Strategy Builder"
               body="Four binary-native templates - bull/bear ladder, strangle, range bet - with live cost preview from on-chain pricing."
             />
             <Feature
               accent="bg-profit"
+              iconColor="text-profit"
+              icon={Shield}
               title="Risk Panel"
               body="Bloomberg-grade Greeks: Delta, Theta, max profit/loss, probability of profit via Monte Carlo on the live SVI surface."
             />
             <Feature
               accent="bg-analytical"
+              iconColor="text-analytical"
+              icon={History}
               title="Intraday Backtest"
               body="Replay any strategy against historical SVI snapshots. See exactly how its mark value would have evolved."
             />
             <Feature
-              accent="bg-analytical"
+              accent="bg-amber"
+              iconColor="text-amber"
+              icon={Activity}
               title="Volatility Surface"
               body="Live implied vol smile derived from on-chain oracle params - the same model Predict uses to price every trade."
             />
             <Feature
               accent="bg-warn"
+              iconColor="text-warn"
+              icon={Radio}
               title="Activity Feed"
               body="Every strategy executed through Stratos emits a typed event. Live, queryable, no indexer required."
             />
             <Feature
               accent="bg-loss"
+              iconColor="text-loss"
+              icon={Boxes}
               title="Move Executor"
               body="Our own Move module on testnet. Strategies are named, validated, event-emitting primitives — not anonymous mints."
+            />
+            <Feature
+              accent="bg-cyan"
+              iconColor="text-cyan"
+              icon={PiggyBank}
+              title="Vault Yield"
+              body="Supply DUSDC to Predict's liquidity vault and earn yield from option premiums. You are the protocol's counterparty — every losing trade flows back to LPs."
+              className="lg:col-start-2"
             />
           </div>
         </section>
@@ -132,7 +168,7 @@ export function Landing() {
             <SectionLabel accent="bg-accent">On-chain</SectionLabel>
 
             <dl className="mt-5 space-y-3 text-sm">
-              <Row label="Move package">
+              <Row icon={Package} label="Move package">
                 {packageHref ? (
                   <a
                     href={packageHref}
@@ -146,21 +182,21 @@ export function Landing() {
                   <span className="font-mono text-xs">{STRATOS_PACKAGE_ID}</span>
                 )}
               </Row>
-              <Row label="Module">
+              <Row icon={FileCode2} label="Module">
                 <span className="font-mono text-fg text-xs">stratos::executor</span>
               </Row>
-              <Row label="Functions">
+              <Row icon={FunctionSquare} label="Functions">
                 <span className="font-mono text-fg text-xs">
                   execute_bull_ladder · execute_bear_ladder · execute_strangle · execute_range_bet
                 </span>
               </Row>
-              <Row label="Event">
+              <Row icon={Zap} label="Event">
                 <span className="font-mono text-fg text-xs">StrategyExecuted</span>
               </Row>
-              <Row label="Network">
+              <Row icon={Globe} label="Network">
                 <span className="text-fg text-xs">Sui Testnet</span>
               </Row>
-              <Row label="Strategies executed">
+              <Row icon={ListChecks} label="Strategies executed">
                 <span className="font-mono text-fg text-xs inline-flex items-center gap-2">
                   <LivePulse />
                   <CountUp value={strategyCount} />
@@ -307,16 +343,21 @@ function CountUp({ value, duration = 800 }: { value: number; duration?: number }
 }
 
 function Feature({
-  accent, title, body, className = '',
+  accent, iconColor, icon: Icon, title, body, className = '',
 }: {
   accent: string
+  iconColor: string
+  icon: LucideIcon
   title: string
   body: string
   className?: string
 }) {
   return (
     <div className={`rounded-2xl border border-line/60 bg-surface p-6 transition hover:border-accent/30 hover:-translate-y-0.5 ${className}`}>
-      <div className={`h-1 w-8 rounded-full mb-4 ${accent}`} />
+      <div className="flex items-start justify-between mb-4">
+        <div className={`h-1 w-8 rounded-full ${accent}`} />
+        <Icon className={`h-5 w-5 ${iconColor}`} strokeWidth={1.5} />
+      </div>
       <h3 className="text-base font-semibold mb-2">{title}</h3>
       <p className="text-sm text-fg-2 leading-relaxed">{body}</p>
     </div>
@@ -338,10 +379,13 @@ function SectionLabel({
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline gap-4 flex-wrap">
-      <dt className="text-fg-3 w-52 shrink-0">{label}</dt>
+      <dt className="text-fg-3 w-52 shrink-0 inline-flex items-center gap-2">
+        <Icon className="h-3.5 w-3.5 text-fg-3" strokeWidth={1.5} />
+        {label}
+      </dt>
       <dd>{children}</dd>
     </div>
   )

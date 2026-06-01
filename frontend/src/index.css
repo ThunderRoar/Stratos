@@ -13,6 +13,8 @@
   --color-loss: #FF6B6B;
   --color-warn: #FFC107;
   --color-analytical: #9D6FFF;
+  --color-cyan: #2DD4BF;
+  --color-amber: #F59E0B;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 }
@@ -28,6 +30,11 @@ body {
   color: #FFFFFF;
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
 }
 
 .bg-dotted-grid {

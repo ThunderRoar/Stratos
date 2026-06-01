@@ -1,5 +1,14 @@
 import { PREDICT_SERVER_URL, PREDICT_OBJECT_ID } from '../config/constants'
-import type { Oracle, OracleState, Position, OraclePrice, OracleSVI } from './predict-types'
+import type {
+  Oracle,
+  OracleState,
+  Position,
+  OraclePrice,
+  OracleSVI,
+  VaultSummary,
+  VaultPerformance
+} from './predict-types'
+
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${PREDICT_SERVER_URL}${path}`)
@@ -38,5 +47,13 @@ export function getOraclePriceHistory(oracleId: string, limit = 1000) {
 
 export function getOracleSviHistory(oracleId: string, limit = 1000) {
   return get<OracleSVI[]>(`/oracles/${oracleId}/svi?limit=${limit}`)
+}
+
+export function getVaultSummary(predictId: string = PREDICT_OBJECT_ID) {
+  return get<VaultSummary>(`/predicts/${predictId}/vault/summary`)
+}
+
+export function getVaultPerformance(predictId: string = PREDICT_OBJECT_ID, range: string = 'ALL') {
+  return get<VaultPerformance>(`/predicts/${predictId}/vault/performance?range=${range}`)
 }
 

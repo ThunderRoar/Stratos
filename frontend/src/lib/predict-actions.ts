@@ -94,7 +94,6 @@ export function buildRedeemPositionTx(args: RedeemPositionArgs): Transaction {
       tx.object(CLOCK_OBJECT_ID),
     ],
   })
-
   return tx
 }
 
@@ -120,7 +119,66 @@ export function buildDepositTx(args: DepositArgs): Transaction {
       splitCoin,
     ],
   })
-
   return tx
 }
+
+// LP deposit: split the requested DUSDC out of the user's coin, hand it to predict::supply, receive PLP shares back, and send them to the user's address.
+// Note: unlike trading, LPs interact with Predict directly
+export type SupplyArgs = {
+  amountRaw: bigint
+  sourceCoinId: string // a wallet DUSDC coin with balance >= amountRaw
+  sender: string
+}
+
+export function buildSupplyTx(args: SupplyArgs): Transaction {
+  const tx = new Transaction()
+
+  const [splitCoin] = tx.splitCoins(
+    tx.object(args.sourceCoinId),
+    [tx.pure.u64(args.amountRaw)],
+  )
+
+  const plpCoin = tx.moveCall({
+    target: `${PREDICT_PACKAGE_ID}::predict::supply`,
+    typeArguments: [QUOTE_ASSET_TYPE],
+    arguments: [
+      tx.object(PREDICT_OBJECT_ID),
+      splitCoin,
+      tx.object(CLOCK_OBJECT_ID),
+    ],
+  })
+
+  tx.transferObjects([plpCoin], tx.pure.address(args.sender))
+  return tx
+}
+
+// LP withdrawal: split the requested PLP out of the user's coin, hand it to predict::withdraw, receive DUSDC back, and send it to the user's address. The vault burns the PLP internally.
+export type WithdrawArgs = {
+  sharesRaw: bigint
+  sourcePlpCoinId: string
+  sender: string
+}
+
+export function buildWithdrawTx(args: WithdrawArgs): Transaction {
+  const tx = new Transaction()
+
+  const [splitPlp] = tx.splitCoins(
+    tx.object(args.sourcePlpCoinId),
+    [tx.pure.u64(args.sharesRaw)],
+  )
+
+  const dusdcCoin = tx.moveCall({
+    target: `${PREDICT_PACKAGE_ID}::predict::withdraw`,
+    typeArguments: [QUOTE_ASSET_TYPE],
+    arguments: [
+      tx.object(PREDICT_OBJECT_ID),
+      splitPlp,
+      tx.object(CLOCK_OBJECT_ID),
+    ],
+  })
+
+  tx.transferObjects([dusdcCoin], tx.pure.address(args.sender))
+  return tx
+}
+
 
