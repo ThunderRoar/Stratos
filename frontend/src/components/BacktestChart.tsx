@@ -64,10 +64,10 @@ export function BacktestChart({ data }: Props) {
 
           <Tooltip
             contentStyle={{ background: '#18181b', border: '1px solid #3f3f46' }}
-            labelFormatter={(v: number) => fmtTimeFull(v)}
-            formatter={(value: number, name: string) => {
-              if (name === 'pnl') return [fmtPnl(value), 'P&L']
-              return [value, name]
+            labelFormatter={(v) => fmtTimeFull(Number(v))}
+            formatter={(value, name) => {
+              if (name === 'pnl') return [fmtPnl(Number(value)), 'P&L']
+              return [String(value), String(name)]
             }}
           />
 

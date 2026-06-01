@@ -45,8 +45,8 @@ export function SurfaceChart({ data, spot, forward }: Props) {
 
           <Tooltip
             contentStyle={{ background: '#18181b', border: '1px solid #3f3f46' }}
-            labelFormatter={(v: number) => `Strike: ${fmtUsd(v)}`}
-            formatter={(v: number) => [fmtPct(v), 'Implied Vol']}
+            labelFormatter={(v) => `Strike: ${fmtUsd(Number(v))}`}
+            formatter={(v) => [fmtPct(Number(v)), 'Implied Vol']}
           />
 
           <ReferenceLine x={spot} stroke="#3b82f6" label={{ value: 'spot', fill: '#3b82f6', position: 'insideTopRight', fontSize: 10 }} />

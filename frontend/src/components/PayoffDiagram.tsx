@@ -10,8 +10,6 @@ import {
 } from 'recharts'
 import type { Strategy } from '../lib/strategy-types'
 import { payoffCurve } from '../lib/payoff'
-import { formatUsd } from '../lib/format'
-
 const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 export function PayoffDiagram({ strategy, spot }: { strategy: Strategy; spot: number }) {
@@ -40,8 +38,8 @@ export function PayoffDiagram({ strategy, spot }: { strategy: Strategy; spot: nu
           <YAxis tickFormatter={usd} stroke="#71717a" fontSize={11} />
           <Tooltip
             contentStyle={{ background: '#18181b', border: '1px solid #3f3f46' }}
-            labelFormatter={(v: number) => `Settlement: ${usd(v)}`}
-            formatter={(v: number) => [usd(v), 'P&L']}
+            labelFormatter={(v) => `Settlement: ${usd(Number(v))}`}
+            formatter={(v) => [usd(Number(v)), 'P&L']}
           />
 
           <ReferenceLine y={0} stroke="#52525b" />
