@@ -9,6 +9,7 @@ import {
   legThetaPerDay,
 } from '../lib/options-math'
 import { StatusLabel } from './StatusLabel'
+import { InfoTooltip } from './InfoTooltip'
 
 type Props = {
   strategy: Strategy
@@ -37,12 +38,41 @@ export function RiskPanel({ strategy, spot, atmIv, years }: Props) {
     <div className="rounded-lg border border-line/60 bg-surface p-4 space-y-3">
       <div className="text-[11px] uppercase tracking-wider text-fg-3 font-semibold">Risk Panel</div>
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
-        <Stat label="Max profit" value={'+' + fmtUsd(maxProfit)} color="text-profit" />
-        <Stat label="Max loss" value={'-' + fmtUsd(maxLoss)} color="text-loss" />
-        <Stat label="Net cost" value={fmtUsd(netCost)} hint="paid upfront" />
-        <Stat label="Prob of profit" value={fmtPct(pop)} />
-        <Stat label="Delta" value={fmtSignedSmall(delta)} hint="per $1 spot move" />
-        <Stat label="Theta" value={fmtSigned(theta)} hint="per day" />
+        <Stat
+          label="Max profit"
+          value={'+' + fmtUsd(maxProfit)}
+          color="text-profit"
+          tooltip="Highest possible payout if all in-the-money legs settle in your favor. Sum of leg quantities minus net cost."
+        />
+        <Stat
+          label="Max loss"
+          value={'-' + fmtUsd(maxLoss)}
+          color="text-loss"
+          tooltip="Worst-case downside if every leg expires out-of-the-money. Equal to the upfront premium paid — there is no margin call."
+        />
+        <Stat
+          label="Net cost"
+          value={fmtUsd(netCost)}
+          hint="paid upfront"
+          tooltip="Total DUSDC required to mint all legs of this strategy. Capital is locked until you redeem or the position settles."
+        />
+        <Stat
+          label="Prob of profit"
+          value={fmtPct(pop)}
+          tooltip="Estimated chance the strategy finishes in profit at expiry. Monte Carlo from a lognormal distribution at the live ATM implied vol (5000 samples)."
+        />
+        <Stat
+          label="Delta"
+          value={fmtSignedSmall(delta)}
+          hint="per $1 spot move"
+          tooltip="How much the position value changes when spot moves $1. Positive = you gain when spot rises. Negative = you gain when spot falls."
+        />
+        <Stat
+          label="Theta"
+          value={fmtSigned(theta)}
+          hint="per day"
+          tooltip="How much the position value changes per day from time decay alone (holding spot and vol constant). Usually negative for long option positions."
+        />
       </div>
 
       <div>
@@ -78,10 +108,13 @@ export function RiskPanel({ strategy, spot, atmIv, years }: Props) {
   )
 }
 
-function Stat({ label, value, hint, color = 'text-fg' }: { label: string; value: string; hint?: string; color?: string }) {
+function Stat({ label, value, hint, color = 'text-fg', tooltip }: { label: string; value: string; hint?: string; color?: string; tooltip?: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+      <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-fg-3 font-medium">
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </div>
       <div className={`mt-1 text-base font-mono ${color}`}>{value}</div>
       {hint && <div className="text-[10px] text-fg-3/70 mt-0.5">{hint}</div>}
     </div>

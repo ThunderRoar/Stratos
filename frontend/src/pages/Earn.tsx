@@ -5,6 +5,7 @@ import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { useWalletPlpCoins } from '../hooks/useWalletPlpCoins'
 import { SupplyWithdrawForm } from '../components/SupplyWithdrawForm'
 import { VaultPerformanceChart } from '../components/VaultPerformanceChart'
+import { InfoTooltip } from '../components/InfoTooltip'
 import { TrendingUp, Wallet, Unlock, type LucideIcon } from 'lucide-react'
 
 
@@ -61,6 +62,7 @@ function HeroStats({ vault }: { vault: VaultSummary }) {
         primary={vault.plp_share_price.toFixed(4)}
         icon={TrendingUp}
         iconColor="text-profit"
+        tooltip="DUSDC value of one PLP share. Rises as the vault earns trading premiums from traders' net losses. Genesis = 1.0000."
         secondary={
           <span className={returnColor}>
             {returnSign}{lifetimePct.toFixed(2)}% lifetime
@@ -72,6 +74,7 @@ function HeroStats({ vault }: { vault: VaultSummary }) {
         primary={fmtDusdcCompact(vault.vault_value)}
         icon={Wallet}
         iconColor="text-accent"
+        tooltip="Total DUSDC in the vault, including mark-to-market on open trader positions. This is the vault's net worth."
         secondary={<span className="text-fg-3">{fmtDusdc(vault.vault_value)}</span>}
       />
       <BigStat
@@ -79,6 +82,7 @@ function HeroStats({ vault }: { vault: VaultSummary }) {
         primary={fmtDusdcCompact(vault.available_withdrawal)}
         icon={Unlock}
         iconColor="text-cyan"
+        tooltip="DUSDC the vault can pay out right now. Lower than TVL when funds are reserved against open trader positions."
         secondary={
           <span className="text-fg-3">
             {fmtPct(vault.available_withdrawal / Math.max(vault.vault_value, 1), 1)} of TVL
@@ -92,26 +96,42 @@ function HeroStats({ vault }: { vault: VaultSummary }) {
 function SecondaryStats({ vault }: { vault: VaultSummary }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-      <Stat label="Utilization" value={fmtPct(vault.utilization)} />
-      <Stat label="Total supplied (lifetime)" value={fmtDusdc(vault.total_supplied)} />
-      <Stat label="Total withdrawn (lifetime)" value={fmtDusdc(vault.total_withdrawn)} />
+      <Stat
+        label="Utilization"
+        value={fmtPct(vault.utilization)}
+        tooltip="Fraction of vault funds reserved against open trader positions. Higher = more in-flight risk; lower = more idle capital."
+      />
+      <Stat
+        label="Total supplied (lifetime)"
+        value={fmtDusdc(vault.total_supplied)}
+        tooltip="Cumulative DUSDC ever deposited into the vault since launch. Includes deposits that have since been withdrawn."
+      />
+      <Stat
+        label="Total withdrawn (lifetime)"
+        value={fmtDusdc(vault.total_withdrawn)}
+        tooltip="Cumulative DUSDC ever withdrawn from the vault since launch."
+      />
     </div>
   )
 }
 
 function BigStat({
-  label, primary, secondary, icon: Icon, iconColor,
+  label, primary, secondary, icon: Icon, iconColor, tooltip,
 }: {
   label: string
   primary: string
   secondary: React.ReactNode
   icon: LucideIcon
   iconColor: string
+  tooltip?: string
 }) {
   return (
     <div className="rounded-lg border border-line/60 bg-surface p-5">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+        <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-fg-3 font-medium">
+          {label}
+          {tooltip && <InfoTooltip text={tooltip} />}
+        </div>
         <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={1.5} />
       </div>
       <div className="mt-2 text-3xl font-mono font-semibold text-fg">{primary}</div>
@@ -120,10 +140,13 @@ function BigStat({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
   return (
     <div className="rounded-lg border border-line/60 bg-surface p-4">
-      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+      <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-fg-3 font-medium">
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </div>
       <div className="mt-1.5 text-xl font-mono text-fg">{value}</div>
     </div>
   )
@@ -180,18 +203,34 @@ function YourPosition({ vault }: { vault: VaultSummary }) {
     <div className="rounded-lg border border-line/60 bg-surface p-5">
       {header}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <PositionStat label="PLP balance" value={plpBalance.toFixed(4)} unit="PLP" />
-        <PositionStat label="Position value" value={fmtDusdc(positionValueRaw6)} />
-        <PositionStat label="Share of vault" value={fmtPct(shareOfVault, 4)} />
+        <PositionStat
+          label="PLP balance"
+          value={plpBalance.toFixed(4)}
+          unit="PLP"
+          tooltip="Number of PLP shares you hold. Receive these when you supply DUSDC; burn them to withdraw."
+        />
+        <PositionStat
+          label="Position value"
+          value={fmtDusdc(positionValueRaw6)}
+          tooltip="Your PLP balance × current share price. Updates automatically as the vault earns."
+        />
+        <PositionStat
+          label="Share of vault"
+          value={fmtPct(shareOfVault, 4)}
+          tooltip="Your PLP balance as a fraction of all PLP outstanding. Your slice of the vault's yield is proportional to this."
+        />
       </div>
     </div>
   )
 }
 
-function PositionStat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function PositionStat({ label, value, unit, tooltip }: { label: string; value: string; unit?: string; tooltip?: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-fg-3 font-medium">{label}</div>
+      <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-fg-3 font-medium">
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </div>
       <div className="mt-1 text-xl font-mono text-fg">
         {value}
         {unit && <span className="ml-1 text-xs text-fg-3 font-sans">{unit}</span>}

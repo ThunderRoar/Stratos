@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCurrentAccount } from '@mysten/dapp-kit-react'
 import { useQueryClient } from '@tanstack/react-query'
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc'
 import { useExecuteStrategy } from '../hooks/useExecuteStrategy'
 import { useWalletDusdcCoins } from '../hooks/useWalletDusdcCoins'
 import { useWalletPlpCoins } from '../hooks/useWalletPlpCoins'
@@ -32,6 +33,7 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
   const [mode, setMode] = useState<Mode>('supply')
   const [amount, setAmount] = useState('')
   const [submitSnapshot, setSubmitSnapshot] = useState<{ dusdc: bigint; plp: bigint; mode: Mode } | null>(null)
+  const [recoveredDigest, setRecoveredDigest] = useState<string | null>(null)
   const exec = useExecuteStrategy()
   const queryClient = useQueryClient()
   const { data: dusdc } = useWalletDusdcCoins()
@@ -84,14 +86,50 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
   const canSubmit =
     amountRaw !== null && amountRaw > 0n && !overBalance && !overAvailable && !exec.isPending
 
+  const resetPostTxState = () => {
+    if (submitSnapshot != null) setSubmitSnapshot(null)
+    if (recoveredDigest != null) setRecoveredDigest(null)
+    if (exec.data || exec.error) exec.reset()
+  }
+
+  const recoverDigestFromChain = async (): Promise<string | null> => {
+    if (!account) return null
+    try {
+      const client = new SuiJsonRpcClient({
+        url: getJsonRpcFullnodeUrl('testnet'),
+        network: 'testnet',
+      })
+      const result = await client.queryTransactionBlocks({
+        filter: { FromAddress: account.address },
+        limit: 1,
+        order: 'descending',
+        options: { showEffects: true },
+      })
+      const latest = result.data?.[0]
+      if (latest?.effects?.status?.status === 'success') return latest.digest
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const handleAmountChange = (value: string) => {
+    resetPostTxState()
+    setAmount(value)
+  }
+
+  const handleModeChange = (next: Mode) => {
+    resetPostTxState()
+    setMode(next)
+  }
+
   const handleMax = () => {
+    resetPostTxState()
     setAmount((Number(walletBalance) / 1e6).toString())
   }
 
   const handleSubmit = async () => {
     if (!canSubmit || !amountRaw) return
-
-    // Snapshot before the tx so we can detect chain success via balance diff after the mutation
     setSubmitSnapshot({ dusdc: dusdc.totalBalance, plp: plp.totalBalance, mode })
 
     const tx = mode === 'supply'
@@ -106,8 +144,11 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
           sender: account.address,
         })
 
+    let kitGaveDigest = false
     try {
-      await exec.mutateAsync(tx)
+      const result = await exec.mutateAsync(tx)
+      const r = result?.$kind === 'Transaction' ? result.Transaction : result?.FailedTransaction
+      kitGaveDigest = !!r?.digest
       setAmount('')
     } catch {
       // exec.error is rendered below
@@ -117,13 +158,16 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
         queryClient.invalidateQueries({ queryKey: ['wallet-dusdc'] }),
         queryClient.invalidateQueries({ queryKey: ['wallet-plp'] }),
       ])
+      if (!kitGaveDigest) {
+        const recovered = await recoverDigestFromChain()
+        if (recovered) setRecoveredDigest(recovered)
+      }
     }
   }
 
-  const txResult =
-    exec.data?.$kind === 'Transaction' ? exec.data.Transaction : exec.data?.FailedTransaction
-  const successDigest = txResult?.digest ?? null
-  const successUrl = successDigest ? explorerTxUrl(successDigest) : null
+  const txResult = exec.data?.$kind === 'Transaction' ? exec.data.Transaction : exec.data?.FailedTransaction
+  const effectiveDigest = txResult?.digest ?? recoveredDigest
+  const successUrl = effectiveDigest ? explorerTxUrl(effectiveDigest) : null
   const balanceConfirmsSuccess = submitSnapshot != null && (
     submitSnapshot.mode === 'supply'
       ? dusdc.totalBalance < submitSnapshot.dusdc
@@ -134,7 +178,7 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
 
   return (
     <div className="rounded-lg border border-line/60 bg-surface p-5">
-      <PanelHeader mode={mode} setMode={setMode} />
+      <PanelHeader mode={mode} setMode={handleModeChange} />
 
       <div className="mt-5 flex items-baseline justify-between text-xs">
         <span className="text-fg-3">
@@ -157,7 +201,7 @@ export function SupplyWithdrawForm({ vault }: { vault: VaultSummary }) {
           inputMode="decimal"
           placeholder="0.00"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(e) => handleAmountChange(e.target.value)}
           style={{
             flex: '1 1 0%',
             minWidth: 0,
