@@ -6,11 +6,13 @@ use deepbook_predict::predict::{Self, Predict};
 use deepbook_predict::predict_manager::PredictManager;
 use deepbook_predict::oracle::OracleSVI;
 use deepbook_predict::market_key::{Self, MarketKey};
+use deepbook_predict::range_key;
 
 const EInvalidBullLadder: u64 = 1;
 const EInvalidBearLadder: u64 = 2;
 const EInvalidStrangle: u64 = 3;
 const EInvalidRangeBet: u64 = 4;
+const EInvalidRangeBand: u64 = 5;
 
 public struct StrategyExecuted has copy, drop {
     strategy_type: vector<u8>,
@@ -134,6 +136,34 @@ public fun execute_range_bet<Quote>(
         manager: object::id(manager),
         oracle: oracle_id,
         leg_count: 2,
+        timestamp_ms: sui::clock::timestamp_ms(clock),
+    });
+}
+
+/// Range Band: BUY a single native vertical range (lower, higher]. Pays qty if settlement
+/// lands inside the band, 0 otherwise.
+public fun execute_range_band<Quote>(
+    predict: &mut Predict,
+    manager: &mut PredictManager,
+    oracle: &OracleSVI,
+    expiry: u64,
+    lower_strike: u64,
+    higher_strike: u64,
+    qty: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    assert!(lower_strike < higher_strike, EInvalidRangeBand);
+    let oracle_id = object::id(oracle);
+
+    let key = range_key::new(oracle_id, expiry, lower_strike, higher_strike);
+    predict::mint_range<Quote>(predict, manager, oracle, key, qty, clock, ctx);
+
+    event::emit(StrategyExecuted {
+        strategy_type: b"range_band",
+        manager: object::id(manager),
+        oracle: oracle_id,
+        leg_count: 1,
         timestamp_ms: sui::clock::timestamp_ms(clock),
     });
 }

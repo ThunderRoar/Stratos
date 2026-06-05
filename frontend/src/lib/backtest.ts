@@ -1,7 +1,7 @@
 import type { Strategy } from './strategy-types'
 import type { OracleSnapshot } from './predict-types'
 import { parseRawSvi, impliedVol } from './svi'
-import { binaryCallPrice, yearsFromDays } from './options-math'
+import { binaryCallPrice, rangePrice, yearsFromDays } from './options-math'
 
 const MS_PER_YEAR = 365.25 * 86_400_000
 
@@ -24,10 +24,15 @@ export function strategyValueAtSnapshot(strategy: Strategy, snapshot: OracleSnap
   const atmIv = impliedVol(sviParams, forwardDollars, forwardDollars, yearsFromDays(1))
 
   return strategy.legs.reduce((sum, leg) => {
-    if (leg.kind !== 'binary') return sum
-    const p = binaryCallPrice(spotDollars, leg.strike, atmIv, yearsRemaining)
-    const v = (leg.direction === 'up' ? p : 1 - p) * leg.qty
-    return sum + v
+    if (leg.kind === 'binary') {
+      const p = binaryCallPrice(spotDollars, leg.strike, atmIv, yearsRemaining)
+      const v = (leg.direction === 'up' ? p : 1 - p) * leg.qty
+      return sum + v
+    }
+    // Range leg: value = qty * (binaryCallPrice(lower) − binaryCallPrice(higher))
+    // Same identity as the Risk Panel: a range that pays in (L, H] decomposes into two binaries.
+    const p = rangePrice(spotDollars, leg.lower, leg.higher, atmIv, yearsRemaining)
+    return sum + p * leg.qty
   }, 0)
 }
 

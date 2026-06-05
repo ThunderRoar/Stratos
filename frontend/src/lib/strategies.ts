@@ -79,4 +79,21 @@ export const rangeBet: StrategyTemplate = {
   },
 }
 
-export const ALL_TEMPLATES: StrategyTemplate[] = [bullLadder, bearLadder, strangle, rangeBet]
+// Native vertical range, priced by Predict as a single instrument via mint_range.
+// Construction: ONE range leg with (K_low, K_high), pays qty when settlement lands in (K_low, K_high].
+// Unlike Range Bet (which doubles up in the band), Range Band pays a single qty inside cleaner payoff, single cost, single PTB call, single chain primitive.
+export const rangeBand: StrategyTemplate = {
+  id: 'range_band',
+  name: 'Range Band',
+  description: 'Single native range. Pays once if BTC settles inside the band.',
+  buildLegs: (spot, years) => {
+    const s = scaleByExpiry(years)
+    const lower = roundStrike(spot * (1 - 0.03 * s))
+    const higher = roundStrike(spot * (1 + 0.03 * s))
+    return [
+      { kind: 'range', lower, higher, qty: 100, cost: 50 },
+    ] satisfies Leg[]
+  }
+}
+
+export const ALL_TEMPLATES: StrategyTemplate[] = [bullLadder, bearLadder, strangle, rangeBet, rangeBand]

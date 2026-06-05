@@ -1,7 +1,7 @@
 import { Transaction } from '@mysten/sui/transactions'
 import type { Strategy } from './strategy-types'
 import {
-  STRATOS_PACKAGE_ID,
+  STRATOS_LATEST_PACKAGE_ID,
   PREDICT_OBJECT_ID,
   QUOTE_ASSET_TYPE,
 } from '../config/constants'
@@ -22,7 +22,7 @@ type TwoLegArgs = {
 function buildExecutorCall(fn: string, args: TwoLegArgs): Transaction {
   const tx = new Transaction()
   tx.moveCall({
-    target: `${STRATOS_PACKAGE_ID}::executor::${fn}`,
+    target: `${STRATOS_LATEST_PACKAGE_ID}::executor::${fn}`,
     typeArguments: [QUOTE_ASSET_TYPE],
     arguments: [
       tx.object(PREDICT_OBJECT_ID),
@@ -46,7 +46,20 @@ export function buildExecuteStrategyTx(
   oracleId: string,
   expiry: number,
 ): Transaction {
-  // Templates assume binary legs only else fall back
+  // Range Band: single native range leg, routed through execute_range_band
+  if (strategy.templateId === 'range_band' && strategy.legs.length === 1 && strategy.legs[0].kind === 'range') {
+    const r = strategy.legs[0]
+    return buildExecutorCall('execute_range_band', {
+      managerId,
+      oracleId,
+      expiry,
+      strikeARaw: Math.round(r.lower * 1e9),
+      strikeBRaw: Math.round(r.higher * 1e9),
+      qtyRaw: Math.round(r.qty * 1e6),
+    })
+  }
+
+  // All other named templates assume exactly two binary legs, else fall back
   if (strategy.legs.length !== 2 || strategy.legs.some((l) => l.kind !== 'binary')) {
     return buildMintStrategyTx({ managerId, oracleId, expiry, legs: strategy.legs })
   }

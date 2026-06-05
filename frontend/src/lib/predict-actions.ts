@@ -30,31 +30,51 @@ export function buildMintStrategyTx(args: MintStrategyArgs): Transaction {
   const tx = new Transaction()
 
   for (const leg of args.legs) {
-    if (leg.kind !== 'binary') {
-      throw new Error('range legs not implemented in mint PTB yet')
+    if (leg.kind === 'binary') {
+      const key = tx.moveCall({
+        target: `${PREDICT_PACKAGE_ID}::market_key::${leg.direction === 'up' ? 'up' : 'down'}`,
+        arguments: [
+          tx.pure.id(args.oracleId),
+          tx.pure.u64(args.expiry),
+          tx.pure.u64(Math.round(leg.strike * 1e9)),
+        ],
+      })
+      tx.moveCall({
+        target: `${PREDICT_PACKAGE_ID}::predict::mint`,
+        typeArguments: [QUOTE_ASSET_TYPE],
+        arguments: [
+          tx.object(PREDICT_OBJECT_ID),
+          tx.object(args.managerId),
+          tx.object(args.oracleId),
+          key,
+          tx.pure.u64(Math.round(leg.qty * 1e6)),
+          tx.object(CLOCK_OBJECT_ID),
+        ],
+      })
+    } else {
+      // Range leg uses Predict's native mint_range pays qty when settlement in (lower, higher], priced as a single instrument via the vertical range primitive
+      const key = tx.moveCall({
+        target: `${PREDICT_PACKAGE_ID}::range_key::new`,
+        arguments: [
+          tx.pure.id(args.oracleId),
+          tx.pure.u64(args.expiry),
+          tx.pure.u64(Math.round(leg.lower * 1e9)),
+          tx.pure.u64(Math.round(leg.higher * 1e9)),
+        ],
+      })
+      tx.moveCall({
+        target: `${PREDICT_PACKAGE_ID}::predict::mint_range`,
+        typeArguments: [QUOTE_ASSET_TYPE],
+        arguments: [
+          tx.object(PREDICT_OBJECT_ID),
+          tx.object(args.managerId),
+          tx.object(args.oracleId),
+          key,
+          tx.pure.u64(Math.round(leg.qty * 1e6)),
+          tx.object(CLOCK_OBJECT_ID),
+        ],
+      })
     }
-
-    const key = tx.moveCall({
-      target: `${PREDICT_PACKAGE_ID}::market_key::${leg.direction === 'up' ? 'up' : 'down'}`,
-      arguments: [
-        tx.pure.id(args.oracleId),
-        tx.pure.u64(args.expiry),
-        tx.pure.u64(Math.round(leg.strike * 1e9)),
-      ],
-    })
-
-    tx.moveCall({
-      target: `${PREDICT_PACKAGE_ID}::predict::mint`,
-      typeArguments: [QUOTE_ASSET_TYPE],
-      arguments: [
-        tx.object(PREDICT_OBJECT_ID),
-        tx.object(args.managerId),
-        tx.object(args.oracleId),
-        key,
-        tx.pure.u64(Math.round(leg.qty * 1e6)),
-        tx.object(CLOCK_OBJECT_ID),
-      ],
-    })
   }
 
   return tx

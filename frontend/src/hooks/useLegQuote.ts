@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query'
 import { useCurrentClient } from '@mysten/dapp-kit-react'
 import type { Leg } from '../lib/strategy-types'
 import type { Oracle } from '../lib/predict-types'
-import { quoteBinary, type Quote } from '../lib/predict-quote'
+import { quoteBinary, quoteRange, type Quote } from '../lib/predict-quote'
 
 export function useLegQuotes(legs: Leg[], oracle: Oracle | null) {
   const client = useCurrentClient()
@@ -12,16 +12,24 @@ export function useLegQuotes(legs: Leg[], oracle: Oracle | null) {
       queryKey: ['leg-quote', oracle?.oracle_id, legSignature(leg)],
       queryFn: async (): Promise<Quote> => {
         if (!oracle) throw new Error('no oracle')
-        if (leg.kind !== 'binary') throw new Error('range quotes not implemented')
-        return quoteBinary(client, {
+        if (leg.kind === 'binary') {
+          return quoteBinary(client, {
+            oracleId: oracle.oracle_id,
+            expiry: oracle.expiry,
+            strike: Math.round(leg.strike * 1e9),
+            isUp: leg.direction === 'up',
+            quantity: Math.round(leg.qty * 1e6), // dollars to raw 6 decimal DUSDC
+          })
+        }
+        return quoteRange(client, {
           oracleId: oracle.oracle_id,
           expiry: oracle.expiry,
-          strike: Math.round(leg.strike * 1e9),
-          isUp: leg.direction === 'up',
-          quantity: Math.round(leg.qty * 1e6) // dollars to raw 6 decimal DUSDC
+          lower: Math.round(leg.lower * 1e9),
+          higher: Math.round(leg.higher * 1e9),
+          quantity: Math.round(leg.qty * 1e6),
         })
       },
-      enabled: !!oracle && leg.kind === 'binary',
+      enabled: !!oracle,
       staleTime: 30_000,
     })),
   })

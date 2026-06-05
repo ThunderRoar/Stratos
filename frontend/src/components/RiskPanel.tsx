@@ -87,14 +87,22 @@ export function RiskPanel({ strategy, spot, atmIv, years }: Props) {
           </thead>
           <tbody className="font-mono">
             {strategy.legs.map((leg, i) => {
-              if (leg.kind !== 'binary') return null
               return (
                 <tr key={i} className="border-t border-line">
                   <td className="py-1 flex items-center gap-2">
-                    <StatusLabel variant={leg.direction === 'up' ? 'up' : 'down'}>
-                      {leg.direction.toUpperCase()}
-                    </StatusLabel>
-                    <span className="text-fg-2">@ ${leg.strike.toLocaleString()}</span>
+                    {leg.kind === 'binary' ? (
+                      <>
+                        <StatusLabel variant={leg.direction === 'up' ? 'up' : 'down'}>
+                          {leg.direction.toUpperCase()}
+                        </StatusLabel>
+                        <span className="text-fg-2">@ ${leg.strike.toLocaleString()}</span>
+                      </>
+                    ) : (
+                      <>
+                        <StatusLabel variant="analytical">RANGE</StatusLabel>
+                        <span className="text-fg-2">${leg.lower.toLocaleString()}–${leg.higher.toLocaleString()}</span>
+                      </>
+                    )}
                   </td>
                   <td className="text-right">{fmtSignedSmall(legDelta(leg, spot, atmIv, years))}</td>
                   <td className="text-right">{fmtSigned(legThetaPerDay(leg, spot, atmIv, years))}</td>

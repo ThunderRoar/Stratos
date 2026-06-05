@@ -74,6 +74,17 @@ export function binaryCallThetaPerDay(spot: number, strike: number, sigma: numbe
   return thetaPerYear / 365.25
 }
 
+// A vertical range that pays 1 if settlement in (lower, higher] equals binaryCallPrice(lower) - binaryCallPrice(higher) under standard binary pricing. Same identity gives us range Greeks for free but just the difference of two binary Greeks.
+export function rangePrice(spot: number, lower: number, higher: number, sigma: number, years: number): number {
+  return binaryCallPrice(spot, lower, sigma, years) - binaryCallPrice(spot, higher, sigma, years)
+}
+export function rangeDelta(spot: number, lower: number, higher: number, sigma: number, years: number): number {
+  return binaryCallDelta(spot, lower, sigma, years) - binaryCallDelta(spot, higher, sigma, years)
+}
+export function rangeThetaPerDay(spot: number, lower: number, higher: number, sigma: number, years: number): number {
+  return binaryCallThetaPerDay(spot, lower, sigma, years) - binaryCallThetaPerDay(spot, higher, sigma, years)
+}
+
 // Max profit = every leg wins
 export function strategyMaxProfit(strategy: Strategy): number {
   return strategy.legs.reduce((sum, l) => sum + l.qty - l.cost, 0)
@@ -85,20 +96,24 @@ export function strategyMaxLoss(strategy: Strategy): number {
 }
 
 // Per leg Delta. For mint-only positions, a BUY UP gets Delta = +binaryCallDelta * qty,
-// a BUY DOWN gets Delta = -binaryCallDelta * qty
+// a BUY DOWN gets Delta = -binaryCallDelta * qty. Range legs decompose into two binaries.
 export function legDelta(leg: Leg, spot: number, sigma: number, years: number): number {
-  if (leg.kind !== 'binary') return 0  // range legs: skip for now
-  const d = binaryCallDelta(spot, leg.strike, sigma, years)
-  const signed = leg.direction === 'up' ? d : -d
-  return signed * leg.qty
+  if (leg.kind === 'binary') {
+    const d = binaryCallDelta(spot, leg.strike, sigma, years)
+    const signed = leg.direction === 'up' ? d : -d
+    return signed * leg.qty
+  }
+  return rangeDelta(spot, leg.lower, leg.higher, sigma, years) * leg.qty
 }
 
-// Per leg Theta per day. DOWN legs flip the sign
+// Per leg Theta per day. DOWN legs flip the sign. Range legs decompose into two binaries.
 export function legThetaPerDay(leg: Leg, spot: number, sigma: number, years: number): number {
-  if (leg.kind !== 'binary') return 0
-  const t = binaryCallThetaPerDay(spot, leg.strike, sigma, years)
-  const signed = leg.direction === 'up' ? t : -t
-  return signed * leg.qty
+  if (leg.kind === 'binary') {
+    const t = binaryCallThetaPerDay(spot, leg.strike, sigma, years)
+    const signed = leg.direction === 'up' ? t : -t
+    return signed * leg.qty
+  }
+  return rangeThetaPerDay(spot, leg.lower, leg.higher, sigma, years) * leg.qty
 }
 
 // Strategy Delta = sum of leg deltas
