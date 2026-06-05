@@ -9,7 +9,10 @@ export const QUOTE_ASSET_TYPE = '0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f
 export const DUSDC_CURRENCY_ID = '0xf3000dff421833d4bb8ed58fac146d691a3aaba2785aa1989af65a7089ca3e9c'
 export const PLP_COIN_TYPE = '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138::plp::PLP'
 export const DUSDC_DECIMALS = 6
+// Original publish address. Move type identity (events, structs) is anchored here forever.
+// Use this for event queries and as the canonical address shown in UI / docs.
 export const STRATOS_PACKAGE_ID = '0x1353e53419f8c227df2e85817cf8bfbdb08c290d01f5dbdfe44058fb19dcbcfa'
+export const STRATOS_LATEST_PACKAGE_ID = '0x945578fd7d99b3138387c9e4b87d8fb9e363b84764435458798dcce97d53f0e5'
 export const EXPLORER_BASE = `https://suiscan.xyz/${NETWORK}`
 
 if (NETWORK !== 'testnet') {

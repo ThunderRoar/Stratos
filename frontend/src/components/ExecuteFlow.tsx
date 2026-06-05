@@ -43,14 +43,22 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
         label="Create Manager"
         pendingLabel={syncing ? 'Waiting for indexer…' : undefined}
         onClick={async () => {
-          await execute.mutateAsync(buildCreateManagerTx())
+          try {
+            await execute.mutateAsync(buildCreateManagerTx())
+          } catch {
+            // Wallet-closed quirk: tx may have succeeded. The poll below detects via manager existence.
+          }
           setSyncing(true)
           try {
             // Predict server indexer lags the chain by 10-30s so poll until our manager shows up
             const deadline = Date.now() + 45_000
             while (Date.now() < deadline) {
               const { data } = await refetchManager()
-              if (data) break
+              if (data) {
+                // Manager exists on chain — clear any stale dapp-kit error so the cascade advances
+                if (execute.error) execute.reset()
+                break
+              }
               await new Promise((r) => setTimeout(r, 1500))
             }
           } finally {
@@ -94,18 +102,26 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
           label={`Deposit ${fmtUsd(shortfallRaw)}`}
           pendingLabel={syncing ? 'Confirming on chain…' : undefined}
           onClick={async () => {
-            await execute.mutateAsync(buildDepositTx({
-              managerId,
-              amountRaw: shortfallRaw,
-              sourceCoinId: wallet.coins[0].id,
-            }))
+            try {
+              await execute.mutateAsync(buildDepositTx({
+                managerId,
+                amountRaw: shortfallRaw,
+                sourceCoinId: wallet.coins[0].id,
+              }))
+            } catch {
+              // Wallet-closed quirk possible - chain may have succeeded anyway. Poll below decides.
+            }
             setSyncing(true)
             try {
-              // RPC node may not have ingested the deposit checkpoint yet so poll until it has
+              // Always poll: if balance reaches target, deposit succeeded regardless of any error
               const deadline = Date.now() + 20_000
               while (Date.now() < deadline) {
                 const [{ data: bal }] = await Promise.all([refetchManagerBalance(), refetchWallet()])
-                if (bal != null && bal >= depositTargetRaw) break
+                if (bal != null && bal >= depositTargetRaw) {
+                  // Chain confirms success - clear any stale dapp-kit error so the cascade advances
+                  if (execute.error) execute.reset()
+                  break
+                }
                 await new Promise((r) => setTimeout(r, 1000))
               }
             } finally {
@@ -139,13 +155,34 @@ export function ExecuteFlow({ strategy, oracleId, expiry }: Props) {
       </div>
       <Action
         label="Execute Strategy"
-        pendingLabel="Executing on chain…"
+        pendingLabel={syncing ? 'Confirming on chain…' : 'Executing on chain…'}
         onClick={async () => {
-          await execute.mutateAsync(buildExecuteStrategyTx(strategy, managerId, oracleId, expiry))
-          // Manager balance drops after mint so refetch so the UI is current
-          await refetchManagerBalance()
+          // Snapshot manager balance pre-execute. A successful mint drops it by ~strategyCostRaw,
+          // letting us detect chain success even if dapp kit throws the popup-closed quirk.
+          const balanceBefore = mgrBalance
+          try {
+            await execute.mutateAsync(buildExecuteStrategyTx(strategy, managerId, oracleId, expiry))
+          } catch {
+            // Wallet-closed quirk: tx may have succeeded. The poll below decides.
+          }
+          setSyncing(true)
+          try {
+            // Poll until manager balance drops (indicating the mint hit chain) or timeout
+            const deadline = Date.now() + 20_000
+            while (Date.now() < deadline) {
+              const { data: bal } = await refetchManagerBalance()
+              if (bal != null && bal < balanceBefore) {
+                // Chain confirms success — clear any stale dapp-kit error
+                if (execute.error) execute.reset()
+                break
+              }
+              await new Promise((r) => setTimeout(r, 1000))
+            }
+          } finally {
+            setSyncing(false)
+          }
         }}
-        pending={execute.isPending}
+        pending={execute.isPending || syncing}
         error={translateError(execute.error?.message)}
         success={txDigest ? `Tx: ${txDigest.slice(0, 16)}…` : null}
         successHref={txDigest ? explorerTxUrl(txDigest) : null}
