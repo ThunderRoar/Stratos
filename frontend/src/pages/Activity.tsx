@@ -22,12 +22,13 @@ export function Activity() {
       />
 
       {list.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
           <Stat label="Total" value={list.length.toString()} />
           <Stat label="Bull Ladder" value={(byType.bull_ladder ?? 0).toString()} />
           <Stat label="Bear Ladder" value={(byType.bear_ladder ?? 0).toString()} />
           <Stat label="Strangle" value={(byType.strangle ?? 0).toString()} />
           <Stat label="Range Bet" value={(byType.range_bet ?? 0).toString()} />
+          <Stat label="Range Band" value={(byType.range_band ?? 0).toString()} />
         </div>
       )}
 
