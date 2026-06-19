@@ -55,7 +55,23 @@ export function Portfolio() {
     return <div className="p-6 text-fg-3">Loading positions…</div>
   }
   if (error) {
-    return <div className="p-6 text-loss">Failed to load positions: {error.message}</div>
+    const isUpstreamPricingError =
+      error.message.includes('missing mark quote results') ||
+      (error.message.includes('Predict server 500') && error.message.includes('positions/summary'))
+    return (
+      <div className="p-6 text-sm">
+        {isUpstreamPricingError ? (
+          <div className="rounded-lg border border-warn/40 bg-warn/5 p-4 text-warn">
+            <div className="font-medium mb-1">Position pricing is temporarily unavailable.</div>
+            <div className="text-warn/80">
+              The upstream pricing service returned a temporary error. This usually resolves on its own within a few hours. Refresh to retry.
+            </div>
+          </div>
+        ) : (
+          <div className="text-loss">Failed to load positions: {error.message}</div>
+        )}
+      </div>
+    )
   }
 
   const open = (positions ?? []).filter((p) => p.open_quantity > 0)
