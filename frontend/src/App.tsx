@@ -8,6 +8,7 @@ import { Surface } from './pages/Surface'
 import { Portfolio } from './pages/Portfolio'
 import { Activity } from './pages/Activity'
 import { Earn } from './pages/Earn'
+import { NotFound } from './pages/NotFound'
 
 export default function App() {
   const account = useCurrentAccount()
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/earn" element={<Earn />} />
         <Route path="/surface" element={<Surface />} />
         <Route path="/activity" element={<Activity />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {!isLanding && !account && (

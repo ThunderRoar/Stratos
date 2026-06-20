@@ -86,3 +86,8 @@ When Predict goes mainnet, Stratos becomes the structured products layer for bin
 - [dApp Kit](https://sdk.mystenlabs.com/dapp-kit)
 - [DeepBook Predict Documentation](https://docs.sui.io/onchain-finance/deepbook-predict/)
 - [Move source](https://github.com/MystenLabs/deepbookv3/tree/predict-testnet-4-16/packages/predict)
+
+
+## License
+
+Apache 2.0. See [LICENSE](LICENSE).
