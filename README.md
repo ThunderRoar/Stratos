@@ -2,7 +2,11 @@
 
 Multi-leg options strategies on DeepBook Predict. A retail-friendly interface for building, pricing, executing, and providing liquidity for binary options on Sui.
 
-[![Stratos](https://img.youtube.com/vi/Hs8423Mirds/0.jpg)](https://www.youtube.com/watch?v=Hs8423Mirds)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=Hs8423Mirds">
+    <img src="https://img.youtube.com/vi/Hs8423Mirds/0.jpg" alt="Stratos demo video" width="640">
+  </a>
+</p>
 
 ## Why it matters
 
